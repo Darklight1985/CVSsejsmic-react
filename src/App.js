@@ -6,6 +6,7 @@ import SejsmTable from './components/SejsmTable';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Login from './components/Login/Login';
 import useToken from './useToken';
+import MainBar from './components/MainBar/MainBar';
 
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
 
   return (
     <div className="App">
+      <MainBar></MainBar>
       <h2>Таблица сейсмических элементов</h2>
       <Router>
         <Routes>
