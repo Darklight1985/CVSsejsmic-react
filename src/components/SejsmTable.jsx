@@ -41,13 +41,13 @@ const EditableCell = ({
 const SejsmTable = () => {
   const [form] = Form.useForm();
   const [data, setData] = useState();
+  const [fAuthor, setFAuthor] = useState();
   const [editingKey, setEditingKey] = useState('');
   const [loading, setLoading] = useState(false);
+  const [keyword, setKeyword] = useState('');
   const [tableParams, setTableParams] = useState({
     pagination: {
-      total: 100,
-      current: 1,
-      pageSize: 10,
+      pageSize: 10000,
     },
   });
   const isEditing = (record) => record.id === editingKey;
@@ -65,7 +65,26 @@ const SejsmTable = () => {
 
   const handleDelete = (id) => {
     const newData = data.filter((item) => item.id !== id);
+    console.log(id);
     setData(newData);
+    const token = localStorage.getItem('accessToken').replaceAll("\"", "");
+    fetch(`http://localhost:8080/detail/${id}`, {
+      method: 'DELETE',
+      headers: {
+          'Authorization' :'Bearer ' + token,
+      }
+  }).then(res => 
+      {
+        if (res.status == 403) {
+          localStorage.removeItem('accessToken');
+          throw new Error ("Время сессии истекло")
+        } else {
+          return;
+        }
+      }).catch((res) => {
+        alert(res);
+        refreshPage();
+      });
   };
 
   const cancel = () => {
@@ -85,9 +104,32 @@ const SejsmTable = () => {
           ...item,
           ...row,
         });
-        console.log(row);
+        const newItem = newData[index];
+        const token = localStorage.getItem('accessToken').replaceAll("\"", "");
+        fetch(`http://localhost:8080/detail/${newItem.id}`, {
+          method: 'PUT',
+          headers: {
+              'Authorization' :'Bearer ' + token,
+              'Content-Type': 'application/json;charset=utf-8'
+          },
+          body: JSON.stringify(row)
+      }).then((res) =>  {
+        if (res.status == 403) {
+          localStorage.removeItem('accessToken');
+          throw new Error ("Время сессии истекло")
+        } else {
+          return res.json();
+        }
+      })
+      .then((results) => {
         setData(newData);
         setEditingKey('');
+        setLoading(false);
+      }).catch((res) => {
+        alert(res);
+        refreshPage();
+      }
+      );
       } else {
         newData.push(row);
         setData(newData);
@@ -104,6 +146,7 @@ const SejsmTable = () => {
       dataIndex: 'name',
       sorter: true,
       width: '20%',
+      fixed: 'left',
       editable: true,
     },
     {
@@ -111,7 +154,6 @@ const SejsmTable = () => {
       dataIndex: 'roundDate',
       sorter: true,
       width: '20%',
-      editable: true,
     },
     {
       title: 'Дата записи',
@@ -122,6 +164,8 @@ const SejsmTable = () => {
       title: 'Автор',
       dataIndex: 'author',
       sorter: true,
+      render: (author) => `${author.name}`,
+      filters: fAuthor
     },
     {
       title: 'Операции',
@@ -188,9 +232,26 @@ const SejsmTable = () => {
     let order = tableParams.order === 'ascend' ? '%2CASC' : '%2CDESC';
     sort = '&sort=' + nameColumns + order;
     }
-    console.log(sort);
+    let authorArr = tableParams.filters;
+
+    console.log(tableParams);
+    console.log(authorArr);
+    let userAuthors = null;
+    if (authorArr) {
+      const {author} = authorArr;
+       userAuthors = ``
+      for (let key in author) {
+         userAuthors = userAuthors + `&userId=` + author[key];
+      }
+      console.log(userAuthors);
+    }
+   
     setLoading(true);
-    fetch(`http://localhost:8080/detail` + `?page=` + `${tableParams.pagination.current - 1}` + `&size` + `${tableParams.pagination.pageSize}` + `${sort}`, {
+    fetch(`http://localhost:8080/detail` + 
+    `?page=` + `${tableParams.pagination.current - 1}` + 
+    `&size=` + `${tableParams.pagination.pageSize}` + 
+    `${sort}` + 
+    `${userAuthors}`, {
       method: 'GET',
       headers: {
           "Access-Control-Allow-Credentials": "true",
@@ -208,8 +269,26 @@ const SejsmTable = () => {
         }})
       .then((results) => {
         const {content} = results;
+
+        console.log(content)
+           
         setData(content);
         setLoading(false);
+        let filterAuthor = [];
+        let ourFilter = new Set();
+        let nowFilter = [];
+
+        for (let key in content) {
+          filterAuthor.push({value: content[key].author.id, text: content[key].author.name})
+        }
+        filterAuthor.filter(item => !ourFilter.has(JSON.stringify(item)) ? ourFilter.add(JSON.stringify(item)) : false);
+        const fArray = Array.from(ourFilter)
+        for (let key in fArray) {
+          nowFilter.push(JSON.parse(fArray[key]))
+        }
+        console.log(nowFilter);
+        setFAuthor(nowFilter);
+
         setTableParams({
           ...tableParams,
           pagination: {
@@ -235,10 +314,17 @@ const SejsmTable = () => {
     });
   };
 
+  const keywordChange = (e) => {
+     setKeyword(e.target.value);
+    
+  }
+
   return (
     <div>
-    <AddDetail fetch = {fetchData}/>;
+    <AddDetail fetch = {fetchData} param = {tableParams}/>
     <Form form={form} component={false}>
+      Поиск по ключевому слову
+    <Input placeholder="Ключевое слово" style={{width: 200}} onChange = {keywordChange}/>
     <Table
       components={{
               body: {
@@ -253,6 +339,10 @@ const SejsmTable = () => {
       pagination={tableParams.pagination}
       loading={loading}
       onChange={handleTableChange}
+      scroll={{
+        x: 1500,
+        y: 640,
+      }}
     />
     </Form>
     </div>

@@ -4,18 +4,12 @@ import { DatePicker, Button, Form, Input } from 'antd';
 
 
 const AddDetail = (props) => {
-  const [form] = Form.useForm();
-  const [, forceUpdate] = useState({});
 
-  // To disable submit button at the beginning.
-  useEffect(() => {
-    forceUpdate({});
-  }, []);
+  const [form] = Form.useForm();
 
   const onFinish = (values) => {
     const token = localStorage.getItem('accessToken').replaceAll("\"", "");
-    console.log(props)
-    console.log('Finish:', values);
+  
     fetch(`http://localhost:8080/detail`, {
         method: 'POST',
         headers: {
@@ -31,7 +25,6 @@ const AddDetail = (props) => {
         } else {
           return res.json();
         }}).then(res=> {
-            console.log(res); 
             props.fetch();
             return res;
         }
