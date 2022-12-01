@@ -2,6 +2,7 @@ import { Form, Input, InputNumber, Popconfirm, Table, Typography } from 'antd';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import './SejsmTable.css';
 import AddDetail from './AddDetail/AddDetail';
+import AddKeyword from './AddKeyword';
 
 const EditableCell = ({
   editing,
@@ -225,6 +226,7 @@ const SejsmTable = () => {
  }
 
   const fetchData = () => {
+
     const token = localStorage.getItem('accessToken').replaceAll("\"", "");
     let sort = '';
     if (tableParams.column) {
@@ -245,13 +247,20 @@ const SejsmTable = () => {
       }
       console.log(userAuthors);
     }
+
+    console.log(keyword);
+    let wordKey = '';
+    if (keyword) {
+      wordKey = '&keyword=' + keyword;
+    } 
    
     setLoading(true);
     fetch(`http://localhost:8080/detail` + 
     `?page=` + `${tableParams.pagination.current - 1}` + 
     `&size=` + `${tableParams.pagination.pageSize}` + 
     `${sort}` + 
-    `${userAuthors}`, {
+    `${userAuthors}`+
+    `${wordKey}`, {
       method: 'GET',
       headers: {
           "Access-Control-Allow-Credentials": "true",
@@ -304,7 +313,7 @@ const SejsmTable = () => {
 
   useEffect(() => {
     fetchData();
-  }, [JSON.stringify(tableParams)]);
+ }, [JSON.stringify(tableParams), keyword]);
 
   const handleTableChange = (pagination, filters, sorter) => {
     setTableParams({
@@ -314,17 +323,13 @@ const SejsmTable = () => {
     });
   };
 
-  const keywordChange = (e) => {
-     setKeyword(e.target.value);
-    
-  }
 
   return (
     <div>
     <AddDetail fetch = {fetchData} param = {tableParams}/>
     <Form form={form} component={false}>
       Поиск по ключевому слову
-    <Input placeholder="Ключевое слово" style={{width: 200}} onChange = {keywordChange}/>
+    <AddKeyword keys={keyword} keywordChange = {setKeyword} fetch = {fetchData}/>
     <Table
       components={{
               body: {
