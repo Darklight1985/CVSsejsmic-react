@@ -10,7 +10,7 @@ const AddDetail = (props) => {
   const onFinish = (values) => {
     const token = localStorage.getItem('accessToken').replaceAll("\"", "");
   
-    fetch(`http://localhost:8080/detail`, {
+    fetch(`http://109.167.155.87:8080/detail`, {
         method: 'POST',
         headers: {
             'Authorization' :'Bearer ' + token,

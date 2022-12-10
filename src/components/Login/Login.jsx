@@ -5,7 +5,7 @@ import { Button, Input, Space } from 'antd';
 import './Login.css';
 
 async function loginUser(credentials) {
-    return fetch('http://localhost:8080/login', {
+    return fetch('http://109.167.155.87:8080/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

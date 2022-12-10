@@ -3,6 +3,7 @@ import React, { useContext, useEffect, useRef, useState } from 'react';
 import './SejsmTable.css';
 import AddDetail from './AddDetail/AddDetail';
 import AddKeyword from './AddKeyword';
+import Column from 'antd/es/table/Column';
 
 const EditableCell = ({
   editing,
@@ -13,6 +14,7 @@ const EditableCell = ({
   index,
   children,
   ...restProps
+
 }) => {
   const inputNode = inputType === 'number' ? <InputNumber /> : <Input />;
   return (
@@ -48,11 +50,11 @@ const SejsmTable = () => {
   const [keyword, setKeyword] = useState('');
   const [tableParams, setTableParams] = useState({
     pagination: {
+      current: 1,
       pageSize: 10000,
     },
   });
   const isEditing = (record) => record.id === editingKey;
-
   const edit = (record) => {
     form.setFieldsValue({
       name: '',
@@ -69,7 +71,7 @@ const SejsmTable = () => {
     console.log(id);
     setData(newData);
     const token = localStorage.getItem('accessToken').replaceAll("\"", "");
-    fetch(`http://localhost:8080/detail/${id}`, {
+    fetch(`http://109.167.155.87:8080/detail/${id}`, {
       method: 'DELETE',
       headers: {
           'Authorization' :'Bearer ' + token,
@@ -107,7 +109,7 @@ const SejsmTable = () => {
         });
         const newItem = newData[index];
         const token = localStorage.getItem('accessToken').replaceAll("\"", "");
-        fetch(`http://localhost:8080/detail/${newItem.id}`, {
+        fetch(`http://109.167.155.87:8080/detail/${newItem.id}`, {
           method: 'PUT',
           headers: {
               'Authorization' :'Bearer ' + token,
@@ -205,6 +207,8 @@ const SejsmTable = () => {
     },
   ];
 
+  
+
   const mergedColumns = columns.map((col) => {
     if (!col.editable) {
       return col;
@@ -225,8 +229,64 @@ const SejsmTable = () => {
     window.location.reload();
  }
 
-  const fetchData = () => {
+  const getDetails = (sort, userAuthors, wordKey, token) => {
+     if (userAuthors == null) {
+      userAuthors = '';
+      }
+    fetch(`http://109.167.155.87:8080/detail` + 
+    `?page=` + `${tableParams.pagination.current - 1}` + 
+    `&size=` + `${tableParams.pagination.pageSize}` + 
+    `${sort}` + 
+    `${userAuthors}`+
+    `${wordKey}`, {
+      method: 'GET',
+      credentials: "include",
+      headers: {
+          'Authorization' :'Bearer ' + token,
+          'Content-Type': 'application/json;charset=utf-8'
+      }
+     })
+      .then((res) =>  {
+        console.log(tableParams);
+        if (res.status == 403) {
+          localStorage.removeItem('accessToken');
+          throw new Error ("Время сессии истекло")
+        } else {
+          return res.json();
+        }})
+      .then((results) => {
+        const {content} = results;
+           
+        setData(content);
+        setLoading(false);
+        let filterAuthor = [];
+        let ourFilter = new Set();
+        let nowFilter = [];
 
+        for (let key in content) {
+          filterAuthor.push({value: content[key].author.id, text: content[key].author.name})
+        }
+        filterAuthor.filter(item => !ourFilter.has(JSON.stringify(item)) ? ourFilter.add(JSON.stringify(item)) : false);
+        const fArray = Array.from(ourFilter)
+        for (let key in fArray) {
+          nowFilter.push(JSON.parse(fArray[key]))
+        }
+        setFAuthor(nowFilter);
+
+        setTableParams({
+          ...tableParams,
+          pagination: {
+            ...tableParams.pagination,
+            total: results.totalElements,
+          },
+        });
+      }).catch((res) => {
+        alert(res);
+        refreshPage();
+      });
+  }
+
+   const getParams = () => {
     const token = localStorage.getItem('accessToken').replaceAll("\"", "");
     let sort = '';
     if (tableParams.column) {
@@ -253,62 +313,15 @@ const SejsmTable = () => {
     if (keyword) {
       wordKey = '&keyword=' + keyword;
     } 
+    console.log(tableParams);
    
     setLoading(true);
-    fetch(`http://localhost:8080/detail` + 
-    `?page=` + `${tableParams.pagination.current - 1}` + 
-    `&size=` + `${tableParams.pagination.pageSize}` + 
-    `${sort}` + 
-    `${userAuthors}`+
-    `${wordKey}`, {
-      method: 'GET',
-      headers: {
-          "Access-Control-Allow-Credentials": "true",
-          "Access-Control-Allow-Private-Network": "true",
-          'Authorization' :'Bearer ' + token,
-          'Content-Type': 'application/json;charset=utf-8'
-      }
-     })
-      .then((res) =>  {
-        if (res.status == 403) {
-          localStorage.removeItem('accessToken');
-          throw new Error ("Время сессии истекло")
-        } else {
-          return res.json();
-        }})
-      .then((results) => {
-        const {content} = results;
+    return {sort, userAuthors, wordKey, token};
+   }
 
-        console.log(content)
-           
-        setData(content);
-        setLoading(false);
-        let filterAuthor = [];
-        let ourFilter = new Set();
-        let nowFilter = [];
-
-        for (let key in content) {
-          filterAuthor.push({value: content[key].author.id, text: content[key].author.name})
-        }
-        filterAuthor.filter(item => !ourFilter.has(JSON.stringify(item)) ? ourFilter.add(JSON.stringify(item)) : false);
-        const fArray = Array.from(ourFilter)
-        for (let key in fArray) {
-          nowFilter.push(JSON.parse(fArray[key]))
-        }
-        console.log(nowFilter);
-        setFAuthor(nowFilter);
-
-        setTableParams({
-          ...tableParams,
-          pagination: {
-            ...tableParams.pagination,
-            total: results.totalElements,
-          },
-        });
-      }).catch((res) => {
-        alert(res);
-        refreshPage();
-      });
+  const fetchData = () => {
+    const {sort, userAuthors, wordKey, token} = getParams();
+    getDetails(sort, userAuthors, wordKey, token);
   };
 
   useEffect(() => {
@@ -344,10 +357,12 @@ const SejsmTable = () => {
       pagination={tableParams.pagination}
       loading={loading}
       onChange={handleTableChange}
+      
       scroll={{
         x: 1500,
         y: 640,
       }}
+      
     />
     </Form>
     </div>
