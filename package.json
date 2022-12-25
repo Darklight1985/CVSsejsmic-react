@@ -12,6 +12,8 @@
     "@types/react": "^18.0.25",
     "@types/react-dom": "^18.0.9",
     "antd": "^5.0.0",
+    "antd-dayjs-webpack-plugin": "^1.0.6",
+    "dayjs": "^1.11.7",
     "qs": "^6.11.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

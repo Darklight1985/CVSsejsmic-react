@@ -1,9 +1,13 @@
-import { Form, Input, InputNumber, Popconfirm, Table, Typography } from 'antd';
+import { Form, Input, InputNumber, Popconfirm, Table, Typography, Drawer, Button } from 'antd';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import './SejsmTable.css';
+import AddUser from './AddUser/AddUser';
 import AddDetail from './AddDetail/AddDetail';
 import AddKeyword from './AddKeyword';
+import EditDetail from './Edit Detail/Edit Detail';
 import Column from 'antd/es/table/Column';
+
+let isCreate = false;
 
 const EditableCell = ({
   editing,
@@ -45,26 +49,61 @@ const SejsmTable = () => {
   const [form] = Form.useForm();
   const [data, setData] = useState();
   const [fAuthor, setFAuthor] = useState();
-  const [editingKey, setEditingKey] = useState('');
+  const [detailBase, setDetail] = useState();
   const [loading, setLoading] = useState(false);
   const [keyword, setKeyword] = useState('');
+  const [open, setOpen] = useState(false);
   const [tableParams, setTableParams] = useState({
     pagination: {
       current: 1,
-      pageSize: 10000,
+      pageSize: 100,
     },
   });
-  const isEditing = (record) => record.id === editingKey;
-  const edit = (record) => {
-    form.setFieldsValue({
-      name: '',
-      roundDate: '',
-      createDateTime: '',
-      author: '',
-      ...record,
+  
+
+  function showDrawer(e) {
+    e.preventDefault();
+    const id = e.target.parentNode.id;
+    console.log(id);
+    if (id == '') {
+      setDetail();
+      isCreate = true;
+      setOpen(true);
+    } else {
+     getDetail(id).then(result => {setDetail(result);
+      isCreate = false;
+    setOpen(true);
+    return result;
     });
-    setEditingKey(record.id);
+     }
   };
+
+  const onClose = () => {
+    setOpen(false);
+  };
+
+  async function getDetail(id) {
+    return fetch(`http://109.167.155.87:8080/detail/${id}`, {
+      method: 'GET',
+      headers: {
+          'Authorization' :'Bearer ' + localStorage.getItem('accessToken').replaceAll("\"", ""),
+          'Content-Type': 'application/json;charset=utf-8'
+      },
+  }).then((res) =>  {
+    if (res.status == 403) {
+      localStorage.removeItem('accessToken');
+      throw new Error ("Время сессии истекло")
+    } else {
+      return res.json();
+    }
+  })
+  .then((results) => {
+      return results;
+  }).catch((res) => {
+    alert(res);
+    refreshPage();
+  });
+}
 
   const handleDelete = (id) => {
     const newData = data.filter((item) => item.id !== id);
@@ -88,59 +127,6 @@ const SejsmTable = () => {
         alert(res);
         refreshPage();
       });
-  };
-
-  const cancel = () => {
-    setEditingKey('');
-  };
-
-  const save = async (id) => {
-    try {
-      const row = await form.validateFields();
-      const newData = [...data];
-      const index = newData.findIndex((item) => id === item.id);
-      console.log(index);
-      if (index > -1) {
-        const item = newData[index];
-        console.log(item);
-        newData.splice(index, 1, {
-          ...item,
-          ...row,
-        });
-        const newItem = newData[index];
-        const token = localStorage.getItem('accessToken').replaceAll("\"", "");
-        fetch(`http://109.167.155.87:8080/detail/${newItem.id}`, {
-          method: 'PUT',
-          headers: {
-              'Authorization' :'Bearer ' + token,
-              'Content-Type': 'application/json;charset=utf-8'
-          },
-          body: JSON.stringify(row)
-      }).then((res) =>  {
-        if (res.status == 403) {
-          localStorage.removeItem('accessToken');
-          throw new Error ("Время сессии истекло")
-        } else {
-          return res.json();
-        }
-      })
-      .then((results) => {
-        setData(newData);
-        setEditingKey('');
-        setLoading(false);
-      }).catch((res) => {
-        alert(res);
-        refreshPage();
-      }
-      );
-      } else {
-        newData.push(row);
-        setData(newData);
-        setEditingKey('');
-      }
-    } catch (errInfo) {
-      console.log('Validate Failed:', errInfo);
-    }
   };
 
   const columns = [
@@ -174,27 +160,10 @@ const SejsmTable = () => {
       title: 'Операции',
       dataIndex: 'operation',
       render: (_, record) => {
-        const editable = isEditing(record);
-        return editable ? (
-          <span>
-            <Typography.Link
-              onClick={() => save(record.id)}
-              style={{
-                marginRight: 8,
-              }}
-            >
-              Сохранить
-            </Typography.Link>
-            <Popconfirm title="Sure to cancel?" onConfirm={cancel}>
-              <a>Отмена</a>
-            </Popconfirm>
-          </span>
-        ) : (
+        return (
           <span>
           <div>
-          <Typography.Link disabled={editingKey !== ''} onClick={() => edit(record)}>
-            Редактировать
-          </Typography.Link>
+          <Button type="link" onClick={showDrawer} id = {record.id}>Редактировать</Button>
           </div>
           <div>
           <Popconfirm title="Хотите удалить?" onConfirm={() => handleDelete(record.id)}>
@@ -207,8 +176,6 @@ const SejsmTable = () => {
     },
   ];
 
-  
-
   const mergedColumns = columns.map((col) => {
     if (!col.editable) {
       return col;
@@ -220,7 +187,6 @@ const SejsmTable = () => {
         inputType: 'text',
         dataIndex: col.dataIndex,
         title: col.title,
-        editing: isEditing(record),
       }),
     };
   });
@@ -339,10 +305,11 @@ const SejsmTable = () => {
 
   return (
     <div>
-    <AddDetail fetch = {fetchData} param = {tableParams}/>
+
     <Form form={form} component={false}>
       Поиск по ключевому слову
     <AddKeyword keys={keyword} keywordChange = {setKeyword} fetch = {fetchData}/>
+    <Button type='primary' onClick={showDrawer}>Добавить деталь</Button>
     <Table
       components={{
               body: {
@@ -364,6 +331,9 @@ const SejsmTable = () => {
       }}
       
     />
+       <Drawer title={`${isCreate ? 'Добавление' : 'Редактирование '} элемента`} placement="right" onClose={onClose} open={open} destroyOnClose>
+        <EditDetail data = {data} setData = {setData} refreshPage = {refreshPage} initialValue = {detailBase} isCreate = {isCreate} getSort = {getParams} getDetails = {getDetails}></EditDetail>
+      </Drawer>
     </Form>
     </div>
   );
