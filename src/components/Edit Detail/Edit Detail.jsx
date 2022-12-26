@@ -10,11 +10,7 @@ const EditDetail = ({isCreate, data, setData, refreshPage, initialValue, getSort
 
   const [form] = Form.useForm();
   
-  useLayoutEffect(() => {
-    console.log(isCreate);
-    console.log(initialValue)
- });
-
+//сделать загрузку фото когда человек вышел из окна добавлени деталей
    const onFinish = (values) => {
     if (isCreate) {
       const newData = [...data];

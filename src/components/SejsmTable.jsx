@@ -1,13 +1,13 @@
-import { Form, Input, InputNumber, Popconfirm, Table, Typography, Drawer, Button } from 'antd';
+import { Form, Input, InputNumber, Popconfirm, Table, Drawer, Button, Image } from 'antd';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import './SejsmTable.css';
-import AddUser from './AddUser/AddUser';
-import AddDetail from './AddDetail/AddDetail';
 import AddKeyword from './AddKeyword';
 import EditDetail from './Edit Detail/Edit Detail';
 import Column from 'antd/es/table/Column';
+import UploadPhoto from './UploadPhoto/UploadPhoto';
 
 let isCreate = false;
+let idPhoto;
 
 const EditableCell = ({
   editing,
@@ -53,13 +53,19 @@ const SejsmTable = () => {
   const [loading, setLoading] = useState(false);
   const [keyword, setKeyword] = useState('');
   const [open, setOpen] = useState(false);
+  const [openPhoto, setOpenPhoto] = useState(false);
   const [tableParams, setTableParams] = useState({
     pagination: {
       current: 1,
-      pageSize: 100,
+      pageSize: 1000,
     },
   });
   
+  function showPhoto(e) {
+    e.preventDefault();
+    idPhoto = e.target.parentNode.id;
+    setOpenPhoto(true);
+  }
 
   function showDrawer(e) {
     e.preventDefault();
@@ -80,6 +86,10 @@ const SejsmTable = () => {
 
   const onClose = () => {
     setOpen(false);
+  };
+
+  const closePhoto = () => {
+    setOpenPhoto(false);
   };
 
   async function getDetail(id) {
@@ -158,17 +168,19 @@ const SejsmTable = () => {
     },
     {
       title: 'Операции',
+      width: '13%',
       dataIndex: 'operation',
       render: (_, record) => {
         return (
           <span>
           <div>
-          <Button type="link" onClick={showDrawer} id = {record.id}>Редактировать</Button>
+          <Button type="link" onClick={showDrawer} id = {record.id} >Редактировать</Button>
+          <Popconfirm title="Хотите удалить?" onConfirm={() => handleDelete(record.id)} >
+          <a>Удалить</a>
+          </Popconfirm>
           </div>
           <div>
-          <Popconfirm title="Хотите удалить?" onConfirm={() => handleDelete(record.id)}>
-            <a>Удалить</a>
-          </Popconfirm>
+          <Button type="link" id = {record.id} onClick={showPhoto}>Фото</Button>
           </div>
           </span>
         );
@@ -305,7 +317,6 @@ const SejsmTable = () => {
 
   return (
     <div>
-
     <Form form={form} component={false}>
       Поиск по ключевому слову
     <AddKeyword keys={keyword} keywordChange = {setKeyword} fetch = {fetchData}/>
@@ -331,8 +342,11 @@ const SejsmTable = () => {
       }}
       
     />
-       <Drawer title={`${isCreate ? 'Добавление' : 'Редактирование '} элемента`} placement="right" onClose={onClose} open={open} destroyOnClose>
-        <EditDetail data = {data} setData = {setData} refreshPage = {refreshPage} initialValue = {detailBase} isCreate = {isCreate} getSort = {getParams} getDetails = {getDetails}></EditDetail>
+      <Drawer title={`${isCreate ? 'Добавление' : 'Редактирование '} элемента`} placement="right" onClose={onClose} open={open} destroyOnClose>
+       <EditDetail data = {data} setData = {setData} refreshPage = {refreshPage} initialValue = {detailBase} isCreate = {isCreate} getSort = {getParams} getDetails = {getDetails}></EditDetail>
+      </Drawer>
+      <Drawer title="Фотографии" placement="bottom" onClose={closePhoto} open={openPhoto} destroyOnClose>
+      <UploadPhoto idPhoto = {idPhoto}></UploadPhoto>
       </Drawer>
     </Form>
     </div>
