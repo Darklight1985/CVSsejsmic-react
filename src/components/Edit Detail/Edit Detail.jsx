@@ -9,6 +9,10 @@ dayjs.locale('es')
 const EditDetail = ({isCreate, data, setData, refreshPage, initialValue, getSort, getDetails}) => {
 
   const [form] = Form.useForm();
+
+  const handleChange = (e) => {
+        console.log(e);
+  }
   
 //сделать загрузку фото когда человек вышел из окна добавлени деталей
    const onFinish = (values) => {
@@ -107,7 +111,7 @@ const EditDetail = ({isCreate, data, setData, refreshPage, initialValue, getSort
       })}
       >
         <DatePicker format={'YYYY-MM-DD'} 
-        prefix={<LockOutlined className="site-form-item-icon" />}
+        prefix={<LockOutlined className="site-form-item-icon" />} onChange ={handleChange}
         />
       </Form.Item>
       <Form.Item shouldUpdate>

@@ -1,7 +1,8 @@
-import { Form, Input, InputNumber, Popconfirm, Table, Drawer, Button, Image } from 'antd';
+import { Form, Input, InputNumber, Popconfirm, Table, Drawer, Button, Image, Space } from 'antd';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import './SejsmTable.css';
 import AddKeyword from './AddKeyword';
+import AddDates from './AddDates';
 import EditDetail from './Edit Detail/Edit Detail';
 import Column from 'antd/es/table/Column';
 import UploadPhoto from './UploadPhoto/UploadPhoto';
@@ -18,7 +19,6 @@ const EditableCell = ({
   index,
   children,
   ...restProps
-
 }) => {
   const inputNode = inputType === 'number' ? <InputNumber /> : <Input />;
   return (
@@ -57,7 +57,7 @@ const SejsmTable = () => {
   const [tableParams, setTableParams] = useState({
     pagination: {
       current: 1,
-      pageSize: 1000,
+      pageSize: 100,
     },
   });
   
@@ -144,7 +144,6 @@ const SejsmTable = () => {
       title: 'Название',
       dataIndex: 'name',
       sorter: true,
-      width: '20%',
       fixed: 'left',
       editable: true,
     },
@@ -157,12 +156,14 @@ const SejsmTable = () => {
     {
       title: 'Дата записи',
       dataIndex: 'createDateTime',
+      width: '15%',
       sorter: true,
     },
     {
       title: 'Автор',
       dataIndex: 'author',
       sorter: true,
+      width: '15%',
       render: (author) => `${author.name}`,
       filters: fAuthor
     },
@@ -274,8 +275,6 @@ const SejsmTable = () => {
     }
     let authorArr = tableParams.filters;
 
-    console.log(tableParams);
-    console.log(authorArr);
     let userAuthors = null;
     if (authorArr) {
       const {author} = authorArr;
@@ -283,15 +282,12 @@ const SejsmTable = () => {
       for (let key in author) {
          userAuthors = userAuthors + `&userId=` + author[key];
       }
-      console.log(userAuthors);
     }
 
-    console.log(keyword);
     let wordKey = '';
     if (keyword) {
       wordKey = '&keyword=' + keyword;
     } 
-    console.log(tableParams);
    
     setLoading(true);
     return {sort, userAuthors, wordKey, token};
@@ -318,8 +314,16 @@ const SejsmTable = () => {
   return (
     <div>
     <Form form={form} component={false}>
-      Поиск по ключевому слову
+    <Space direction="horizontal">
+    <Space direction="vertical">
+    <a>Поиск по ключевому слову</a>
     <AddKeyword keys={keyword} keywordChange = {setKeyword} fetch = {fetchData}/>
+    </Space>
+    <Space direction="vertical">
+    <a>Поиск по датам обхода</a>
+    <AddDates fetch = {fetchData}/>
+    </Space>
+    </Space>
     <Button type='primary' onClick={showDrawer}>Добавить деталь</Button>
     <Table
       components={{
@@ -331,11 +335,12 @@ const SejsmTable = () => {
       columns={mergedColumns}
       rowKey={(record) => record.id}
       dataSource={data}
+      size ={"small"}
       rowClassName="editable-row"
       pagination={tableParams.pagination}
       loading={loading}
       onChange={handleTableChange}
-      
+      style ={{fontWeight : 600, fontSize : 16}}
       scroll={{
         x: 1500,
         y: 640,
@@ -345,7 +350,7 @@ const SejsmTable = () => {
       <Drawer title={`${isCreate ? 'Добавление' : 'Редактирование '} элемента`} placement="right" onClose={onClose} open={open} destroyOnClose>
        <EditDetail data = {data} setData = {setData} refreshPage = {refreshPage} initialValue = {detailBase} isCreate = {isCreate} getSort = {getParams} getDetails = {getDetails}></EditDetail>
       </Drawer>
-      <Drawer title="Фотографии" placement="bottom" onClose={closePhoto} open={openPhoto} destroyOnClose>
+      <Drawer title="Фотографии" placement="bottom" onClose={closePhoto} open={openPhoto} height = {500} destroyOnClose>
       <UploadPhoto idPhoto = {idPhoto}></UploadPhoto>
       </Drawer>
     </Form>
