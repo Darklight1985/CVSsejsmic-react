@@ -30,27 +30,29 @@ const Login = ({setToken}) => {
       }
 
   return(
-    <Space direction="vertical">
-      <h1>Please Log In</h1>
+    <Space direction="vertical" style = {{float:'left'}}>
+      <h1>Пожалуйста введите логин и пароль</h1>
       <form onSubmit={handleSubmit}>
       <label>
-          <p>Имя</p>
-          <Input placeholder="default size" onChange={e => setUserName(e.target.value)} prefix={<UserOutlined />} />
+          <p></p>
+          <Input placeholder="Логин" onChange={e => setUserName(e.target.value)} prefix={<UserOutlined />} style ={{width: 200}}/>
         </label>
         <label>
-          <p>Пароль</p>
+          <p></p>
         <Input.Password
           onChange={e => setPassword(e.target.value)}
-          placeholder="input password"
+          placeholder="Пароль"
           visibilityToggle={{
             visible: passwordVisible,
             onVisibleChange: setPasswordVisible,
           }}
+          style ={{width: 200}}
         />
         </label>
         <p></p>
         <div>
-          <button type="submit">Войти</button>
+          <Button type="primary"
+            htmlType="submit">Войти</Button>
         </div>
       </form>
       </Space>

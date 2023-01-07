@@ -5,7 +5,7 @@ import AddUser from '../AddUser/AddUser';
 import AddCommand from '../AddComand/AddComand';
 const {Panel} = Collapse;
 
-const MainBar = () => {
+const UsersBar = () => {
     const [open, setOpen] = useState(false);
     const [openCom, setOpenCom] = useState(false);
     const navigate = useNavigate();
@@ -34,7 +34,7 @@ const MainBar = () => {
     <Collapse defaultActiveKey={['1']}>
      <Panel header="Основное меню" style={{fontSize : 22, fontWeight : 600}} key="1">
      <Space direction="horizontal">
-     <Button type="primary" onClick={() => navigate("/users")}>Пользователи</Button>
+     <Button type="primary" onClick={() => navigate("/")}>Вернуться к главной странице</Button>
      <Drawer title="Создание пользователя" placement="right" onClose={onClose} open={open}>
         <AddUser></AddUser>
       </Drawer>
@@ -49,4 +49,4 @@ const MainBar = () => {
      )
 }
 
-export default MainBar;
+export default UsersBar;

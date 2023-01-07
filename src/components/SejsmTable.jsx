@@ -1,11 +1,12 @@
-import { Form, Input, InputNumber, Popconfirm, Table, Drawer, Button, Image, Space } from 'antd';
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import { Form, Input, InputNumber, Popconfirm, Table, Drawer, Button, Image, Space, message } from 'antd';
+import React, {useEffect, useState } from 'react';
 import './SejsmTable.css';
 import AddKeyword from './AddKeyword';
 import AddDates from './AddDates';
 import EditDetail from './Edit Detail/Edit Detail';
 import Column from 'antd/es/table/Column';
 import UploadPhoto from './UploadPhoto/UploadPhoto';
+import MainBar from './MainBar/MainBar';
 
 let isCreate = false;
 let idPhoto;
@@ -52,6 +53,7 @@ const SejsmTable = () => {
   const [detailBase, setDetail] = useState();
   const [loading, setLoading] = useState(false);
   const [keyword, setKeyword] = useState('');
+  const [dates, setDates] = useState('');
   const [open, setOpen] = useState(false);
   const [openPhoto, setOpenPhoto] = useState(false);
   const [tableParams, setTableParams] = useState({
@@ -60,11 +62,21 @@ const SejsmTable = () => {
       pageSize: 100,
     },
   });
+  const [messageApi, contextHolder] = message.useMessage();
+  const info = (message) => {
+    messageApi.info(message);
+  };
+
+  useEffect(() => {
+    fetchData();
+ }, [JSON.stringify(tableParams), keyword, dates]);
   
   function showPhoto(e) {
     e.preventDefault();
     idPhoto = e.target.parentNode.id;
+    if (idPhoto) {
     setOpenPhoto(true);
+    }
   }
 
   function showDrawer(e) {
@@ -93,7 +105,8 @@ const SejsmTable = () => {
   };
 
   async function getDetail(id) {
-    return fetch(`http://109.167.155.87:8080/detail/${id}`, {
+    console.log(process.env.REACT_APP_DETAIL);
+    return fetch(process.env.REACT_APP_DETAIL + `/${id}`, {
       method: 'GET',
       headers: {
           'Authorization' :'Bearer ' + localStorage.getItem('accessToken').replaceAll("\"", ""),
@@ -120,7 +133,7 @@ const SejsmTable = () => {
     console.log(id);
     setData(newData);
     const token = localStorage.getItem('accessToken').replaceAll("\"", "");
-    fetch(`http://109.167.155.87:8080/detail/${id}`, {
+    fetch(process.env.REACT_APP_DETAIL + `/${id}`, {
       method: 'DELETE',
       headers: {
           'Authorization' :'Bearer ' + token,
@@ -174,15 +187,15 @@ const SejsmTable = () => {
       render: (_, record) => {
         return (
           <span>
-          <div>
+          <Space direction="vertical">
+          <Space direction="horizontal">
           <Button type="link" onClick={showDrawer} id = {record.id} >Редактировать</Button>
           <Popconfirm title="Хотите удалить?" onConfirm={() => handleDelete(record.id)} >
-          <a>Удалить</a>
+           <a>Удалить</a>
           </Popconfirm>
-          </div>
-          <div>
+          </Space>
           <Button type="link" id = {record.id} onClick={showPhoto}>Фото</Button>
-          </div>
+          </Space>
           </span>
         );
       },
@@ -208,16 +221,18 @@ const SejsmTable = () => {
     window.location.reload();
  }
 
-  const getDetails = (sort, userAuthors, wordKey, token) => {
+  const getDetails = (sort, userAuthors, wordKey, token, startTime, endTime) => {
      if (userAuthors == null) {
       userAuthors = '';
       }
-    fetch(`http://109.167.155.87:8080/detail` + 
+    fetch(process.env.REACT_APP_DETAIL + 
     `?page=` + `${tableParams.pagination.current - 1}` + 
     `&size=` + `${tableParams.pagination.pageSize}` + 
     `${sort}` + 
     `${userAuthors}`+
-    `${wordKey}`, {
+    `${wordKey}`+
+    `${startTime}`+
+    `${endTime}`, {
       method: 'GET',
       credentials: "include",
       headers: {
@@ -226,14 +241,13 @@ const SejsmTable = () => {
       }
      })
       .then((res) =>  {
-        console.log(tableParams);
-        if (res.status == 403) {
-          localStorage.removeItem('accessToken');
-          throw new Error ("Время сессии истекло")
-        } else {
-          return res.json();
-        }})
+          return res.json();}
+         )
       .then((results) => {
+        if (results.error_message)
+        {
+          throw new Error (results.error_message);
+        }
         const {content} = results;
            
         setData(content);
@@ -260,7 +274,8 @@ const SejsmTable = () => {
           },
         });
       }).catch((res) => {
-        alert(res);
+        alert(res.message);
+        localStorage.removeItem('accessToken');
         refreshPage();
       });
   }
@@ -288,19 +303,35 @@ const SejsmTable = () => {
     if (keyword) {
       wordKey = '&keyword=' + keyword;
     } 
+
+    let startTime = '';
+    let endTime = '';
+
+    if (dates) {
+      console.log(dates)
+    if (dates[0]) {
+      
+      let date = new Date(dates[0])
+      let newDate = date.toISOString();
+      console.log(newDate)
+      startTime = '&startTime=' + newDate;
+    }
+
+    if (dates[1]) {
+      let date = new Date(dates[1])
+      let newDate = date.toISOString();
+      endTime = '&endTime=' + newDate;
+    }
+  }
    
     setLoading(true);
-    return {sort, userAuthors, wordKey, token};
+    return {sort, userAuthors, wordKey, token, startTime, endTime};
    }
 
   const fetchData = () => {
-    const {sort, userAuthors, wordKey, token} = getParams();
-    getDetails(sort, userAuthors, wordKey, token);
+    const {sort, userAuthors, wordKey, token, startTime, endTime} = getParams();
+    getDetails(sort, userAuthors, wordKey, token, startTime, endTime);
   };
-
-  useEffect(() => {
-    fetchData();
- }, [JSON.stringify(tableParams), keyword]);
 
   const handleTableChange = (pagination, filters, sorter) => {
     setTableParams({
@@ -310,10 +341,12 @@ const SejsmTable = () => {
     });
   };
 
-
   return (
     <div>
+    {contextHolder}
+    <MainBar></MainBar>
     <Form form={form} component={false}>
+    <h1>Таблица элементов</h1>
     <Space direction="horizontal">
     <Space direction="vertical">
     <a>Поиск по ключевому слову</a>
@@ -321,10 +354,10 @@ const SejsmTable = () => {
     </Space>
     <Space direction="vertical">
     <a>Поиск по датам обхода</a>
-    <AddDates fetch = {fetchData}/>
+    <AddDates fetch = {fetchData} dates = {dates} datesChange= {setDates}/>
     </Space>
     </Space>
-    <Button type='primary' onClick={showDrawer}>Добавить деталь</Button>
+    <Button type='primary' onClick={showDrawer} style = {{float:'right'}}>Добавить деталь</Button>
     <Table
       components={{
               body: {
@@ -340,7 +373,7 @@ const SejsmTable = () => {
       pagination={tableParams.pagination}
       loading={loading}
       onChange={handleTableChange}
-      style ={{fontWeight : 600, fontSize : 16}}
+      style ={{fontWeight : 600, fontSize : 26}}
       scroll={{
         x: 1500,
         y: 640,

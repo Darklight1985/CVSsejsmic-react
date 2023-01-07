@@ -47,7 +47,7 @@ const UploadPhoto = ({idPhoto}) => {
       const token = localStorage.getItem('accessToken').replaceAll("\"", "");
       if (photos.length != 0) {
       let photo = photos[index];
-      fetch(`http://109.167.155.87:8080/detail/${photo}/photo`, {
+      fetch(process.env.REACT_APP_DETAIL + `/${photo}/photo`, {
         method: 'DELETE',
         headers: {
             'Authorization' :'Bearer ' + token,
@@ -85,7 +85,7 @@ const UploadPhoto = ({idPhoto}) => {
      }, []);
 
      function getPhotos(idPhoto) {
-        return fetch(`http://109.167.155.87:8080/detail/${idPhoto}/photos`, {
+        return fetch(process.env.REACT_APP_DETAIL + `/${idPhoto}/photos`, {
           method: 'GET',
           headers: {
               'Authorization' :'Bearer ' + localStorage.getItem('accessToken').replaceAll("\"", ""),
@@ -105,7 +105,7 @@ const UploadPhoto = ({idPhoto}) => {
           //setFile(results[0])
           if (results.length != 0) {
           let photo = results[0];
-          import(`./../../photos/${photo}`).then(res => {
+          import(process.env.REACT_APP_PHOTO_STORAGE + `/${photo}`).then(res => {
             console.log(res);
             setIndex(0);
             setFile(res.default)
@@ -126,7 +126,7 @@ const UploadPhoto = ({idPhoto}) => {
         let data = new FormData();
         data.append('avatar', tableElem.files[0]);
 
-        fetch(`http://109.167.155.87:8080/detail/${idPhoto}/add-avatar`, {
+        fetch(process.env.REACT_APP_DETAIL + `/${idPhoto}/add-avatar`, {
             method: 'POST',
             headers: {
                 'Authorization' :'Bearer ' + token
@@ -146,7 +146,7 @@ const UploadPhoto = ({idPhoto}) => {
               setPhotos(arrPhoto);
               if (photos.length == 1) {
               let photo = photos[0];
-              setTimeout(() => import(`./../../photos/${photo}`).then(res => {
+              setTimeout(() => import(process.env.PHOTO_STORAGE + `/${photo}`).then(res => {
                 setIndex(0);
                 setFile(res.default)
               }), 1500);

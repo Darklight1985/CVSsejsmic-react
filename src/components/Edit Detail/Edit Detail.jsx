@@ -46,9 +46,8 @@ const EditDetail = ({isCreate, data, setData, refreshPage, initialValue, getSort
           window.location.reload();
         });
     } else {
-      console.log(initialValue);
+
     let id = initialValue.id;
-    console.log(values)
           const newData = [...data];
           const index = newData.findIndex((item) => id === item.id);
           console.log(index);
