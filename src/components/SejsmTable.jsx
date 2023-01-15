@@ -59,7 +59,7 @@ const SejsmTable = () => {
   const [tableParams, setTableParams] = useState({
     pagination: {
       current: 1,
-      pageSize: 100,
+      pageSize: 1000,
     },
   });
   const [messageApi, contextHolder] = message.useMessage();

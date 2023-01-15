@@ -1,33 +1,40 @@
 import React, { useEffect, useState, Component } from 'react';
-import { DatePicker, Button, Form, Input, Select } from 'antd';
+import { DatePicker, Button, Form, Input, Select, message } from 'antd';
 
 
-const getUsers = async () =>  {
-    return fetch(`http://109.167.155.87:8080/user` , {
-      method: 'GET',
-      credentials: "include",
-      headers: {
-          'Authorization' :'Bearer ' + localStorage.getItem('accessToken').replaceAll("\"", ""),
-          'Content-Type': 'application/json;charset=utf-8'
-      }
-     })
-      .then((res) =>  {
-        if (res.status == 403) {
-          localStorage.removeItem('accessToken');
-          throw new Error ("Время сессии истекло")
-        } else {
-          return res.json();
-        }})
-        .catch((res) => {
-        alert(res);
-      });
-}
+const AddCommand = ({isCreate, data, setData, refreshPage, initialValue, getSort, getCommands}) => {
 
-const AddCommand = () => {
-  const [password, setPassword] = useState();
-  const [passwordVisible, setPasswordVisible] = React.useState(false);
   const [users, setUsers] = useState([{value:1, text:"2"}]);
   const [form] = Form.useForm();
+  const [messageApi, contextHolder] = message.useMessage();
+  const info = (message) => {
+    messageApi.info(message);
+  };
+
+const getUsers = async () =>  {
+  return fetch(process.env.REACT_APP_USER , {
+    method: 'GET',
+    credentials: "include",
+    headers: {
+        'Authorization' :'Bearer ' + localStorage.getItem('accessToken').replaceAll("\"", ""),
+        'Content-Type': 'application/json;charset=utf-8'
+    }
+   })
+    .then((res) =>{
+      if (res.status == 403) {
+        throw new Error ("Время сессии истекло")
+      } else {       
+        return res.json();
+      }}).then(res => {
+        const {content} = res;
+        return content;
+      })
+      .catch((res) => {
+        alert(res.error_message);
+        localStorage.removeItem('accessToken');
+        refreshPage();
+    });
+}
 
   useEffect(() => {
     getSelectUsers();
@@ -48,19 +55,22 @@ const AddCommand = () => {
         console.log(filterAuthor)});
    };
 
-  const onFinish = (values) => {
+   const onFinish = (oldValues) => {
+    console.log(oldValues);
+    let participants = [oldValues.participantsOne, oldValues.participantsTwo];
+    let values = {name :oldValues.name, participants};
     console.log(values);
+
+    const newData = [...data];
     const token = localStorage.getItem('accessToken').replaceAll("\"", "");
-
-   getSelectUsers();
-
-    fetch(`http://109.167.155.87:8080/command`, {
+    if (isCreate) {
+    fetch(process.env.REACT_APP_COMMAND, {
         method: 'POST',
         headers: {
             'Authorization' :'Bearer ' + token,
             'Content-Type': 'application/json;charset=utf-8'
         },
-        body: JSON.stringify({name: values.name, participants :[values.participantsOne, values.participantsTwo]})
+        body: JSON.stringify(values)
     })
     .then((res) =>  {
         if (res.status == 403) {
@@ -69,6 +79,11 @@ const AddCommand = () => {
         } else {
           return res.json();
         }}).then(res=> {
+          const {sort, userAuthors, wordKey, token} = getSort();
+          getCommands(sort, userAuthors, wordKey, token);
+            newData.push(res);
+            setData(newData);
+            info('Вы успешно создали новую команду');
             return res;
         }
         )
@@ -76,14 +91,54 @@ const AddCommand = () => {
         alert(res);
         window.location.reload();
       });
+
+    } else {
+      let id = initialValue.id;
+      const newData = [...data];
+      const index = newData.findIndex((item) => id === item.id);
+      if (index > -1) {
+        const item = newData[index];
+        console.log(item);
+        const token = localStorage.getItem('accessToken').replaceAll("\"", "");
+        fetch(process.env.REACT_APP_COMMAND + `/${initialValue.id}`, {
+          method: 'PUT',
+          headers: {
+              'Authorization' :'Bearer ' + token,
+              'Content-Type': 'application/json;charset=utf-8'
+          },
+          body: JSON.stringify(values)
+      }).then((res) => {
+        if (res.status == 403) {
+          localStorage.removeItem('accessToken');
+          throw new Error ("Время сессии истекло")
+        } else {
+          return res.json().
+          then(res => {
+            console.log(newData)
+            console.log(res);
+            newData[index] = res;
+            setData(newData);
+          });}
+      })
+        .catch((res) => {
+        alert(res);
+        refreshPage();
+      }
+      );
   };
+    }
+  };
+
+
   return (
-    <Form form={form} name="horizontal_login" onFinish={onFinish}>
+    <div>
+    {contextHolder}
+    <Form form={form} name="horizontal_login" onFinish={onFinish} initialValues = {initialValue}>
       <Form.Item
         name="name"
         rules={[
           {
-            required: true,
+            required: isCreate ? true : false,
             message: 'Пожалуйста введите имя пользователя',
           },
         ]}
@@ -99,13 +154,14 @@ const AddCommand = () => {
           },
         ]}
       >
-        <Select
+      <Select
       defaultValue='Выберите сотрудника'
       style={{
         width: 220,
       }}
       onChange={handleChange}
       options={users}
+      id = 'firstSelecter'
     />
       </Form.Item>
       <Form.Item
@@ -132,15 +188,16 @@ const AddCommand = () => {
             type="primary"
             htmlType="submit"
             disabled={
-              !form.isFieldsTouched(true) ||
+              isCreate ? !form.isFieldsTouched(true) : false ||
               !!form.getFieldsError().filter(({ errors }) => errors.length).length
             }
           >
-            Добавить
+            {isCreate ? 'Добавить' : 'Отредактировать'}
           </Button>
         )}
       </Form.Item>
     </Form>
+    </div>
   );
 };
 export default AddCommand;

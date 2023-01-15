@@ -12,7 +12,7 @@ const AddUser = ({isCreate, data, setData, refreshPage, initialValue, getSort, g
     const newData = [...data];
     const token = localStorage.getItem('accessToken').replaceAll("\"", "");
     if (isCreate) {
-    fetch(`http://109.167.155.87:8080/user`, {
+    fetch(process.env.REACT_APP_USER, {
         method: 'POST',
         headers: {
             'Authorization' :'Bearer ' + token,
@@ -49,7 +49,7 @@ const AddUser = ({isCreate, data, setData, refreshPage, initialValue, getSort, g
         const item = newData[index];
         console.log(item);
         const token = localStorage.getItem('accessToken').replaceAll("\"", "");
-        fetch(`http://109.167.155.87:8080/user/${initialValue.id}`, {
+        fetch(process.env.REACT_APP_USER + `/${initialValue.id}`, {
           method: 'PUT',
           headers: {
               'Authorization' :'Bearer ' + token,
@@ -101,7 +101,7 @@ const AddUser = ({isCreate, data, setData, refreshPage, initialValue, getSort, g
           },
         ]}
       >
-        <Input  placeholder="Фамилия пользвателя" />
+        <Input  placeholder="Фамилия пользователя" />
       </Form.Item>
       <Form.Item
         name="username"

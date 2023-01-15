@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Input, Space , Collapse, Drawer} from 'antd';
-import AddUser from '../AddUser/AddUser';
-import AddCommand from '../AddComand/AddComand';
 const {Panel} = Collapse;
 
-const UsersBar = () => {
+const CommandBar = () => {
     const [open, setOpen] = useState(false);
     const [openCom, setOpenCom] = useState(false);
     const navigate = useNavigate();
@@ -35,12 +33,12 @@ const UsersBar = () => {
      <Panel header="Основное меню" style={{fontSize : 22, fontWeight : 600}} key="1">
      <Space direction="horizontal">
      <Button type="primary" onClick={() => navigate("/")}>Вернуться к главной странице</Button>
-     <Button type = "primary" onClick={() => navigate("/commands")}>Команды</Button>
-     <Button type = "primary" onClick={handleLogout}>Выйти</Button>
+     <Button type="primary" onClick={() => navigate("/users")}>Пользователи</Button>
+    <Button type = "primary" onClick={handleLogout}>Выйти</Button>
     </Space>
     </Panel>
     </Collapse>
      )
 }
 
-export default UsersBar;
+export default CommandBar;

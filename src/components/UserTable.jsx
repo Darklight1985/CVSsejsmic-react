@@ -205,9 +205,6 @@ const UserTable = () => {
 }
 
  const handleDelete = (id) => {
-  const newData = data.filter((item) => item.id !== id);
-  console.log(id);
-  setData(newData);
   const token = localStorage.getItem('accessToken').replaceAll("\"", "");
   fetch(process.env.REACT_APP_USER + `/${id}`, {
     method: 'DELETE',
@@ -215,15 +212,26 @@ const UserTable = () => {
         'Authorization' :'Bearer ' + token,
     }
 }).then(res => 
-    {
-      if (res.status == 403) {
-        localStorage.removeItem('accessToken');
-        throw new Error ("Время сессии истекло")
-      } else {
-        return;
+  {  if (res.status == 403) {
+     throw new Error (res.json())}
+     else {
+      if (res.status == 200) {
+        const newData = data.filter((item) => item.id !== id);
+        setData(newData);
+        return {};
       }
+      return res.json();
+     }
+  })
+    .then(res =>
+    {
+      if (res.error_message)
+      {
+        info (res.error_message);
+      } 
     }).catch((res) => {
-      alert(res);
+      alert(res.error_message);
+      localStorage.removeItem('accessToken');
       refreshPage();
     });
 };
@@ -286,6 +294,7 @@ const UserTable = () => {
 
     return (
         <div>
+        {contextHolder}
         <UsersBar></UsersBar>
         <Form form={form} component={false}>
         <h1>Таблица пользователей</h1>

@@ -9,6 +9,7 @@ import Login from './components/Login/Login';
 import useToken from './useToken';
 import MainBar from './components/MainBar/MainBar';
 import UserTable from './components/UserTable';
+import CommandTable from './components/CommandTable';
 
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
         <Routes>
         <Route path="/" element={<SejsmTable/>}/>
         <Route path="/users" element={<UserTable/>}/>
+        <Route path="/commands" element={<CommandTable/>}/>
         </Routes>
       </Router>
     </div>
