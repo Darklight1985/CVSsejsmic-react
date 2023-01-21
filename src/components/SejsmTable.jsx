@@ -1,5 +1,6 @@
 import { Form, Input, InputNumber, Popconfirm, Table, Drawer, Button, Image, Space, message } from 'antd';
 import React, {useEffect, useState } from 'react';
+import { getDetail } from '../fetchData';
 import './SejsmTable.css';
 import AddKeyword from './AddKeyword';
 import AddDates from './AddDates';
@@ -50,6 +51,7 @@ const SejsmTable = () => {
   const [form] = Form.useForm();
   const [data, setData] = useState();
   const [fAuthor, setFAuthor] = useState();
+  const [fRoom, setfRoom] = useState();
   const [detailBase, setDetail] = useState();
   const [loading, setLoading] = useState(false);
   const [keyword, setKeyword] = useState('');
@@ -59,7 +61,7 @@ const SejsmTable = () => {
   const [tableParams, setTableParams] = useState({
     pagination: {
       current: 1,
-      pageSize: 1000,
+      pageSize: 100,
     },
   });
   const [messageApi, contextHolder] = message.useMessage();
@@ -68,7 +70,11 @@ const SejsmTable = () => {
   };
 
   useEffect(() => {
-    fetchData();
+    setFilters();
+ }, []);
+
+  useEffect(() => {
+    fetchData()
  }, [JSON.stringify(tableParams), keyword, dates]);
   
   function showPhoto(e) {
@@ -88,7 +94,7 @@ const SejsmTable = () => {
       isCreate = true;
       setOpen(true);
     } else {
-     getDetail(id).then(result => {setDetail(result);
+     getDetail(id, info).then(result => {setDetail(result);
       isCreate = false;
     setOpen(true);
     return result;
@@ -104,29 +110,6 @@ const SejsmTable = () => {
     setOpenPhoto(false);
   };
 
-  async function getDetail(id) {
-    console.log(process.env.REACT_APP_DETAIL);
-    return fetch(process.env.REACT_APP_DETAIL + `/${id}`, {
-      method: 'GET',
-      headers: {
-          'Authorization' :'Bearer ' + localStorage.getItem('accessToken').replaceAll("\"", ""),
-          'Content-Type': 'application/json;charset=utf-8'
-      },
-  }).then((res) =>  {
-    if (res.status == 403) {
-      localStorage.removeItem('accessToken');
-      throw new Error ("Время сессии истекло")
-    } else {
-      return res.json();
-    }
-  })
-  .then((results) => {
-      return results;
-  }).catch((res) => {
-    alert(res);
-    refreshPage();
-  });
-}
 
   const handleDelete = (id) => {
     const newData = data.filter((item) => item.id !== id);
@@ -157,6 +140,7 @@ const SejsmTable = () => {
       title: 'Название',
       dataIndex: 'name',
       sorter: true,
+      width: '25%',
       fixed: 'left',
       editable: true,
     },
@@ -164,36 +148,45 @@ const SejsmTable = () => {
       title: 'Дата обхода',
       dataIndex: 'roundDate',
       sorter: true,
-      width: '20%',
+
     },
     {
       title: 'Дата записи',
       dataIndex: 'createDateTime',
-      width: '15%',
       sorter: true,
     },
     {
       title: 'Автор',
       dataIndex: 'author',
       sorter: true,
-      width: '15%',
       render: (author) => `${author.name}`,
       filters: fAuthor
     },
     {
+      title: 'Помещение',
+      dataIndex: 'room',
+      sorter: true,
+      render: (room) => `${room.name}`,
+      filters: fRoom
+    },
+    {
+      title: 'Высотная отметка',
+      width: '7%',
+      dataIndex: 'height',
+    },
+    {
       title: 'Операции',
-      width: '13%',
+      width: '10%',
+      fixed: 'right',
       dataIndex: 'operation',
       render: (_, record) => {
         return (
           <span>
           <Space direction="vertical">
-          <Space direction="horizontal">
           <Button type="link" onClick={showDrawer} id = {record.id} >Редактировать</Button>
           <Popconfirm title="Хотите удалить?" onConfirm={() => handleDelete(record.id)} >
            <a>Удалить</a>
           </Popconfirm>
-          </Space>
           <Button type="link" id = {record.id} onClick={showPhoto}>Фото</Button>
           </Space>
           </span>
@@ -221,15 +214,19 @@ const SejsmTable = () => {
     window.location.reload();
  }
 
-  const getDetails = (sort, userAuthors, wordKey, token, startTime, endTime) => {
+  const getDetails = (sort, userAuthors, rooms, wordKey, token, startTime, endTime) => {
      if (userAuthors == null) {
       userAuthors = '';
+      }
+      if (rooms == null) {
+        rooms = '';
       }
     fetch(process.env.REACT_APP_DETAIL + 
     `?page=` + `${tableParams.pagination.current - 1}` + 
     `&size=` + `${tableParams.pagination.pageSize}` + 
     `${sort}` + 
     `${userAuthors}`+
+    `${rooms}`+
     `${wordKey}`+
     `${startTime}`+
     `${endTime}`, {
@@ -241,6 +238,7 @@ const SejsmTable = () => {
       }
      })
       .then((res) =>  {
+        setLoading(false);
           return res.json();}
          )
       .then((results) => {
@@ -249,23 +247,8 @@ const SejsmTable = () => {
           throw new Error (results.error_message);
         }
         const {content} = results;
-           
+
         setData(content);
-        setLoading(false);
-        let filterAuthor = [];
-        let ourFilter = new Set();
-        let nowFilter = [];
-
-        for (let key in content) {
-          filterAuthor.push({value: content[key].author.id, text: content[key].author.name})
-        }
-        filterAuthor.filter(item => !ourFilter.has(JSON.stringify(item)) ? ourFilter.add(JSON.stringify(item)) : false);
-        const fArray = Array.from(ourFilter)
-        for (let key in fArray) {
-          nowFilter.push(JSON.parse(fArray[key]))
-        }
-        setFAuthor(nowFilter);
-
         setTableParams({
           ...tableParams,
           pagination: {
@@ -280,6 +263,76 @@ const SejsmTable = () => {
       });
   }
 
+  const getUsers = async () =>  {
+    return fetch(process.env.REACT_APP_USER + `/filter` , {
+      method: 'GET',
+      credentials: "include",
+      headers: {
+          'Authorization' :'Bearer ' + localStorage.getItem('accessToken').replaceAll("\"", ""),
+          'Content-Type': 'application/json;charset=utf-8'
+      }
+     })
+      .then((res) =>{
+        if (res.status == 403) {
+          throw new Error ("Время сессии истекло")
+        } else {       
+          return res.json();
+        }}).then(res => {
+          console.log(res);
+          return res;
+        })
+        .catch((res) => {
+          alert(res.error_message);
+          localStorage.removeItem('accessToken');
+          refreshPage();
+      });
+  }
+
+  const getRooms = async () =>  {
+    return fetch(process.env.REACT_APP_ROOM , {
+      method: 'GET',
+      credentials: "include",
+      headers: {
+          'Authorization' :'Bearer ' + localStorage.getItem('accessToken').replaceAll("\"", ""),
+          'Content-Type': 'application/json;charset=utf-8'
+      }
+     })
+      .then((res) =>{
+        if (res.status == 403) {
+          throw new Error ("Время сессии истекло")
+        } else {       
+          return res.json();
+        }}).then(res => {
+          console.log(res);
+          return res;
+        })
+        .catch((res) => {
+          alert(res.error_message);
+          localStorage.removeItem('accessToken');
+          refreshPage();
+      });
+  }
+
+  const getSelectUsers = () => {
+    getUsers().then(res => {
+        let filterAuthor = [];
+        for (let key in res) {
+          filterAuthor.push({value: res[key].id, text: res[key].name})
+        }
+         setFAuthor(filterAuthor);
+        });
+   };
+
+   const getSelectRoom = () => {
+    getRooms().then(res => {
+        let filterAuthor = [];
+        for (let key in res) {
+          filterAuthor.push({value: res[key].id, text: res[key].name})
+        }
+         setfRoom(filterAuthor);
+        });
+   };
+
    const getParams = () => {
     const token = localStorage.getItem('accessToken').replaceAll("\"", "");
     let sort = '';
@@ -288,16 +341,32 @@ const SejsmTable = () => {
     let order = tableParams.order === 'ascend' ? '%2CASC' : '%2CDESC';
     sort = '&sort=' + nameColumns + order;
     }
-    let authorArr = tableParams.filters;
-
+    console.log(tableParams.filters)
+    let authorArr;
+    let roomArr;
     let userAuthors = null;
+    let rooms = null;
+
+    if (tableParams.filters) {
+    if (tableParams.filters.author) {
+    authorArr = tableParams.filters.author;
+
     if (authorArr) {
-      const {author} = authorArr;
        userAuthors = ``
-      for (let key in author) {
-         userAuthors = userAuthors + `&userId=` + author[key];
+      for (let key in authorArr) {
+         userAuthors = userAuthors + `&userId=` + authorArr[key];
       }
-    }
+    }}
+
+    if (tableParams.filters.room) {
+    roomArr = tableParams.filters.room;
+
+    if (roomArr) {
+       rooms = ``
+      for (let key in roomArr) {
+         rooms = rooms + `&roomId=` + roomArr[key];
+      }
+    }}}
 
     let wordKey = '';
     if (keyword) {
@@ -325,13 +394,18 @@ const SejsmTable = () => {
   }
    
     setLoading(true);
-    return {sort, userAuthors, wordKey, token, startTime, endTime};
+    return {sort, userAuthors, rooms, wordKey, token, startTime, endTime};
    }
 
   const fetchData = () => {
-    const {sort, userAuthors, wordKey, token, startTime, endTime} = getParams();
-    getDetails(sort, userAuthors, wordKey, token, startTime, endTime);
+    const {sort, userAuthors, rooms, wordKey, token, startTime, endTime} = getParams();
+    getDetails(sort, userAuthors, rooms, wordKey, token, startTime, endTime);
   };
+
+  const setFilters = () => {
+    getSelectUsers();
+    getSelectRoom();
+  }
 
   const handleTableChange = (pagination, filters, sorter) => {
     setTableParams({
@@ -350,11 +424,11 @@ const SejsmTable = () => {
     <Space direction="horizontal">
     <Space direction="vertical">
     <a>Поиск по ключевому слову</a>
-    <AddKeyword keys={keyword} keywordChange = {setKeyword} fetch = {fetchData}/>
+    <AddKeyword keys={keyword} keywordChange = {setKeyword}/>
     </Space>
     <Space direction="vertical">
     <a>Поиск по датам обхода</a>
-    <AddDates fetch = {fetchData} dates = {dates} datesChange= {setDates}/>
+    <AddDates dates = {dates} datesChange= {setDates}/>
     </Space>
     </Space>
     <Button type='primary' onClick={showDrawer} style = {{float:'right'}}>Добавить деталь</Button>
@@ -368,16 +442,13 @@ const SejsmTable = () => {
       columns={mergedColumns}
       rowKey={(record) => record.id}
       dataSource={data}
-      size ={"small"}
+      size = {'middle'}
       rowClassName="editable-row"
       pagination={tableParams.pagination}
       loading={loading}
       onChange={handleTableChange}
       style ={{fontWeight : 600, fontSize : 26}}
-      scroll={{
-        x: 1500,
-        y: 640,
-      }}
+      scroll={{x: 1500, y: 640}}
       
     />
       <Drawer title={`${isCreate ? 'Добавление' : 'Редактирование '} элемента`} placement="right" onClose={onClose} open={open} destroyOnClose>

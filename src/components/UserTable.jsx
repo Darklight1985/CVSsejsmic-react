@@ -1,5 +1,7 @@
 import { Form, Input, InputNumber, Popconfirm, Table, Drawer, Button, Image, Space, message } from 'antd';
 import React, { useContext, useEffect, useRef, useState } from 'react';
+import { getUser } from '../fetchData';
+import { deleteUser } from '../fetchData';
 import AddKeyword from './AddKeyword';
 import UsersBar from './UsersBar/UsersBar';
 import AddUser from './AddUser/AddUser';
@@ -66,7 +68,6 @@ const UserTable = () => {
    function showDrawer(e) {
     e.preventDefault();
     const id = e.target.parentNode.id;
-    console.log(id);
     if (id == '') {
       setUser();
       isCreate = true;
@@ -121,7 +122,7 @@ const UserTable = () => {
           <span>
           <Space direction="horizontal">
           <Button type="link" onClick={showDrawer} id = {record.id} >Редактировать</Button>
-          <Popconfirm title="Хотите удалить?" onConfirm={() => handleDelete(record.id)} >
+          <Popconfirm title="Хотите удалить?" onConfirm={() => deleteUser(record.id, info, setData, data)} >
            <a>Удалить</a>
           </Popconfirm>
           </Space>
@@ -180,61 +181,6 @@ const UserTable = () => {
        refreshPage();
      });
  }
-
- async function getUser(id) {
-  return fetch(process.env.REACT_APP_USER + `/${id}`, {
-    method: 'GET',
-    headers: {
-        'Authorization' :'Bearer ' + localStorage.getItem('accessToken').replaceAll("\"", ""),
-        'Content-Type': 'application/json;charset=utf-8'
-    },
-}).then((res) =>  {
-  if (res.status == 403) {
-    localStorage.removeItem('accessToken');
-    throw new Error ("Время сессии истекло")
-  } else {
-    return res.json();
-  }
-})
-.then((results) => {
-    return results;
-}).catch((res) => {
-  alert(res);
-  refreshPage();
-});
-}
-
- const handleDelete = (id) => {
-  const token = localStorage.getItem('accessToken').replaceAll("\"", "");
-  fetch(process.env.REACT_APP_USER + `/${id}`, {
-    method: 'DELETE',
-    headers: {
-        'Authorization' :'Bearer ' + token,
-    }
-}).then(res => 
-  {  if (res.status == 403) {
-     throw new Error (res.json())}
-     else {
-      if (res.status == 200) {
-        const newData = data.filter((item) => item.id !== id);
-        setData(newData);
-        return {};
-      }
-      return res.json();
-     }
-  })
-    .then(res =>
-    {
-      if (res.error_message)
-      {
-        info (res.error_message);
-      } 
-    }).catch((res) => {
-      alert(res.error_message);
-      localStorage.removeItem('accessToken');
-      refreshPage();
-    });
-};
 
    const fetchData = () => {
     const {sort, userAuthors, wordKey, token} = getParams();

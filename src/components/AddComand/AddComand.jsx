@@ -74,24 +74,28 @@ const getUsers = async () =>  {
     })
     .then((res) =>  {
         if (res.status == 403) {
-          localStorage.removeItem('accessToken');
-          throw new Error ("Время сессии истекло")
+          throw new Error (res.json())
         } else {
           return res.json();
         }}).then(res=> {
+          if (res.error_message) 
+            {
+              info (res.error_message)
+            } else {
           const {sort, userAuthors, wordKey, token} = getSort();
           getCommands(sort, userAuthors, wordKey, token);
             newData.push(res);
             setData(newData);
             info('Вы успешно создали новую команду');
             return res;
+          }
         }
         )
       .catch((res) => {
         alert(res);
+        localStorage.removeItem('accessToken');
         window.location.reload();
       });
-
     } else {
       let id = initialValue.id;
       const newData = [...data];
@@ -109,19 +113,22 @@ const getUsers = async () =>  {
           body: JSON.stringify(values)
       }).then((res) => {
         if (res.status == 403) {
-          localStorage.removeItem('accessToken');
           throw new Error ("Время сессии истекло")
         } else {
           return res.json().
-          then(res => {
-            console.log(newData)
-            console.log(res);
+        then(res => { 
+          if (res.error_message) {
+            info (res.error_message);
+          } else {
             newData[index] = res;
             setData(newData);
+            info('Вы успешно отредактировали команду')
+          }
           });}
       })
         .catch((res) => {
         alert(res);
+        localStorage.removeItem('accessToken');
         refreshPage();
       }
       );

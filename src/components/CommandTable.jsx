@@ -1,5 +1,6 @@
 import { Form, Input, InputNumber, Popconfirm, Table, Drawer, Button, Image, Space, message } from 'antd';
 import React, { useContext, useEffect, useRef, useState } from 'react';
+import { getCommand } from '../fetchData';
 import AddKeyword from './AddKeyword';
 import UsersBar from './UsersBar/UsersBar';
 import AddUser from './AddUser/AddUser';
@@ -70,7 +71,7 @@ const CommandTable = () => {
           isCreate = true;
           setOpen(true);
         } else {
-          getCommand(id).then(result => {setCommand(result);
+          getCommand(id, info).then(result => {setCommand(result);
           console.log(result)
           isCreate = false;
         setOpen(true);

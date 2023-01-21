@@ -1,4 +1,4 @@
-import { DatePicker, Button, Form, Input } from 'antd';
+import { DatePicker, Button, Form, Input,  Select } from 'antd';
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import React, { useEffect, useState, Component, useLayoutEffect } from 'react';
 import dayjs from 'dayjs';
@@ -7,12 +7,53 @@ dayjs.locale('es')
 
 
 const EditDetail = ({isCreate, data, setData, refreshPage, initialValue, getSort, getDetails}) => {
-
+  const [rooms, setRooms] = useState([]);
   const [form] = Form.useForm();
+  useEffect(() => {
+    getSelectRooms();
+ }, []);
+
 
   const handleChange = (e) => {
         console.log(e);
   }
+
+  const getRooms = async () =>  {
+    return fetch(process.env.REACT_APP_ROOM , {
+      method: 'GET',
+      credentials: "include",
+      headers: {
+          'Authorization' :'Bearer ' + localStorage.getItem('accessToken').replaceAll("\"", ""),
+          'Content-Type': 'application/json;charset=utf-8'
+      }
+     })
+      .then((res) =>{
+        if (res.status == 403) {
+          throw new Error ("Время сессии истекло")
+        } else {       
+          return res.json();
+        }}).then(res => {
+          console.log(res);
+       //   const {content} = res;
+       return res;
+        })
+        .catch((res) => {
+          alert(res.error_message);
+          localStorage.removeItem('accessToken');
+          refreshPage();
+      });
+  }
+
+  const getSelectRooms = () => {
+    getRooms().then(res => {
+        let filterRoom = [];
+
+        for (let key in res) {
+          filterRoom.push({value: res[key].id, label: res[key].name})
+        }
+         setRooms(filterRoom);
+        console.log(filterRoom)});
+   };
   
 //сделать загрузку фото когда человек вышел из окна добавлени деталей
    const onFinish = (values) => {
@@ -102,7 +143,7 @@ const EditDetail = ({isCreate, data, setData, refreshPage, initialValue, getSort
         rules={[
           {
             required: true,
-            message: 'Пожалуйста введите дату обхода',
+            message: 'Введите дату обхода',
           },
         ]}
         getValueProps={(value) => ({
@@ -113,6 +154,25 @@ const EditDetail = ({isCreate, data, setData, refreshPage, initialValue, getSort
         prefix={<LockOutlined className="site-form-item-icon" />} onChange ={handleChange}
         />
       </Form.Item>
+      <Form.Item
+        name="room"
+        rules={[
+          {
+            required: true,
+            message: 'Выберите помещение',
+          },
+        ]}
+      >
+      <Select
+      defaultValue='Выберите помещение'
+      style={{
+        width: 220,
+      }}
+      onChange={handleChange}
+      options={rooms}
+      id = 'firstSelecter'
+    />
+    </Form.Item>
       <Form.Item shouldUpdate>
         {() => (
           <Button
