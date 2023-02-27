@@ -1,0 +1,17 @@
+FROM node:16 as BUILD
+WORKDIR /app
+COPY ./package.json ./package.json
+RUN npm i
+
+COPY ./src ./src
+COPY ./public ./public
+COPY .env.product .env.product
+RUN npm run build
+
+FROM nginx
+COPY --from=BUILD /app/build/index.html /nginx/static/index.html
+COPY --from=BUILD /app/build/asset-manifest.json /nginx/static/asset-manifest.json
+COPY --from=BUILD /app/build/static/css /nginx/static/
+COPY --from=BUILD /app/build/static/js  /nginx/static/
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

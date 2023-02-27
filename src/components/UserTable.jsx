@@ -1,5 +1,5 @@
-import { Form, Input, InputNumber, Popconfirm, Table, Drawer, Button, Image, Space, message } from 'antd';
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import { Form, Input, InputNumber, Popconfirm, Table, Drawer, Button, Space, message } from 'antd';
+import React, {useEffect, useState } from 'react';
 import { getUser } from '../fetchData';
 import { deleteUser } from '../fetchData';
 import AddKeyword from './AddKeyword';

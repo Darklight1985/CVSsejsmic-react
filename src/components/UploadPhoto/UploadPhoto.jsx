@@ -1,7 +1,5 @@
 import { Button, Image, Space, Row } from "antd";
 import React, { useState, useLayoutEffect, useEffect } from "react";
-import { convertCompilerOptionsFromJson } from "typescript";
-import EditDetail from "../Edit Detail/Edit Detail";
 
 
 const UploadPhoto = ({idPhoto}) => {

@@ -1,6 +1,6 @@
 import React from "react";
-import { LockOutlined, UserOutlined } from '@ant-design/icons';
-import {Input, DatePicker}  from 'antd';
+import { LockOutlined } from '@ant-design/icons';
+import {DatePicker}  from 'antd';
 
 import dayjs from 'dayjs';
 import 'dayjs/locale/es';

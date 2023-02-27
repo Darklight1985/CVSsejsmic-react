@@ -1,11 +1,10 @@
 import { Form, Input, InputNumber, Popconfirm, Table, Drawer, Button, Image, Space, message } from 'antd';
 import React, {useEffect, useState } from 'react';
-import { getDetail } from '../fetchData';
+import { getDetail, deleteDetail, getUsers, getRooms } from '../fetchData';
 import './SejsmTable.css';
 import AddKeyword from './AddKeyword';
 import AddDates from './AddDates';
 import EditDetail from './Edit Detail/Edit Detail';
-import Column from 'antd/es/table/Column';
 import UploadPhoto from './UploadPhoto/UploadPhoto';
 import MainBar from './MainBar/MainBar';
 
@@ -61,7 +60,7 @@ const SejsmTable = () => {
   const [tableParams, setTableParams] = useState({
     pagination: {
       current: 1,
-      pageSize: 100,
+      pageSize: 500,
     },
   });
   const [messageApi, contextHolder] = message.useMessage();
@@ -88,7 +87,6 @@ const SejsmTable = () => {
   function showDrawer(e) {
     e.preventDefault();
     const id = e.target.parentNode.id;
-    console.log(id);
     if (id == '') {
       setDetail();
       isCreate = true;
@@ -108,31 +106,6 @@ const SejsmTable = () => {
 
   const closePhoto = () => {
     setOpenPhoto(false);
-  };
-
-
-  const handleDelete = (id) => {
-    const newData = data.filter((item) => item.id !== id);
-    console.log(id);
-    setData(newData);
-    const token = localStorage.getItem('accessToken').replaceAll("\"", "");
-    fetch(process.env.REACT_APP_DETAIL + `/${id}`, {
-      method: 'DELETE',
-      headers: {
-          'Authorization' :'Bearer ' + token,
-      }
-  }).then(res => 
-      {
-        if (res.status == 403) {
-          localStorage.removeItem('accessToken');
-          throw new Error ("Время сессии истекло")
-        } else {
-          return;
-        }
-      }).catch((res) => {
-        alert(res);
-        refreshPage();
-      });
   };
 
   const columns = [
@@ -184,7 +157,7 @@ const SejsmTable = () => {
           <span>
           <Space direction="vertical">
           <Button type="link" onClick={showDrawer} id = {record.id} >Редактировать</Button>
-          <Popconfirm title="Хотите удалить?" onConfirm={() => handleDelete(record.id)} >
+          <Popconfirm title="Хотите удалить?" onConfirm={() => deleteDetail(record.id, info, setData, data)} >
            <a>Удалить</a>
           </Popconfirm>
           <Button type="link" id = {record.id} onClick={showPhoto}>Фото</Button>
@@ -214,7 +187,7 @@ const SejsmTable = () => {
     window.location.reload();
  }
 
-  const getDetails = (sort, userAuthors, rooms, wordKey, token, startTime, endTime) => {
+  const getDetails = (sort, userAuthors, rooms, wordKey, startTime, endTime) => {
      if (userAuthors == null) {
       userAuthors = '';
       }
@@ -233,21 +206,26 @@ const SejsmTable = () => {
       method: 'GET',
       credentials: "include",
       headers: {
-          'Authorization' :'Bearer ' + token,
+          'Authorization' :'Bearer ' + localStorage.getItem('accessToken').replaceAll("\"", ""),
           'Content-Type': 'application/json;charset=utf-8'
       }
      })
       .then((res) =>  {
-        setLoading(false);
-          return res.json();}
-         )
+        if (res.status == 403) {
+          throw new Error ("время сессии истекло")
+        } else {
+          if (res.status == 200) {
+            setLoading(false);
+            return res.json();
+          }
+           return res.json();
+        }})
       .then((results) => {
         if (results.error_message)
         {
-          throw new Error (results.error_message);
-        }
+          info (results.error_message);
+        } else {
         const {content} = results;
-
         setData(content);
         setTableParams({
           ...tableParams,
@@ -255,66 +233,16 @@ const SejsmTable = () => {
             ...tableParams.pagination,
             total: results.totalElements,
           },
-        });
-      }).catch((res) => {
+          });
+      }}).catch((res) => {
         alert(res.message);
         localStorage.removeItem('accessToken');
         refreshPage();
       });
   }
 
-  const getUsers = async () =>  {
-    return fetch(process.env.REACT_APP_USER + `/filter` , {
-      method: 'GET',
-      credentials: "include",
-      headers: {
-          'Authorization' :'Bearer ' + localStorage.getItem('accessToken').replaceAll("\"", ""),
-          'Content-Type': 'application/json;charset=utf-8'
-      }
-     })
-      .then((res) =>{
-        if (res.status == 403) {
-          throw new Error ("Время сессии истекло")
-        } else {       
-          return res.json();
-        }}).then(res => {
-          console.log(res);
-          return res;
-        })
-        .catch((res) => {
-          alert(res.error_message);
-          localStorage.removeItem('accessToken');
-          refreshPage();
-      });
-  }
-
-  const getRooms = async () =>  {
-    return fetch(process.env.REACT_APP_ROOM , {
-      method: 'GET',
-      credentials: "include",
-      headers: {
-          'Authorization' :'Bearer ' + localStorage.getItem('accessToken').replaceAll("\"", ""),
-          'Content-Type': 'application/json;charset=utf-8'
-      }
-     })
-      .then((res) =>{
-        if (res.status == 403) {
-          throw new Error ("Время сессии истекло")
-        } else {       
-          return res.json();
-        }}).then(res => {
-          console.log(res);
-          return res;
-        })
-        .catch((res) => {
-          alert(res.error_message);
-          localStorage.removeItem('accessToken');
-          refreshPage();
-      });
-  }
-
   const getSelectUsers = () => {
-    getUsers().then(res => {
+    getUsers(info).then(res => {
         let filterAuthor = [];
         for (let key in res) {
           filterAuthor.push({value: res[key].id, text: res[key].name})
@@ -324,7 +252,7 @@ const SejsmTable = () => {
    };
 
    const getSelectRoom = () => {
-    getRooms().then(res => {
+    getRooms(info).then(res => {
         let filterAuthor = [];
         for (let key in res) {
           filterAuthor.push({value: res[key].id, text: res[key].name})
@@ -334,14 +262,12 @@ const SejsmTable = () => {
    };
 
    const getParams = () => {
-    const token = localStorage.getItem('accessToken').replaceAll("\"", "");
     let sort = '';
     if (tableParams.column) {
     let nameColumns = tableParams.column.dataIndex;
     let order = tableParams.order === 'ascend' ? '%2CASC' : '%2CDESC';
     sort = '&sort=' + nameColumns + order;
     }
-    console.log(tableParams.filters)
     let authorArr;
     let roomArr;
     let userAuthors = null;
@@ -377,12 +303,9 @@ const SejsmTable = () => {
     let endTime = '';
 
     if (dates) {
-      console.log(dates)
     if (dates[0]) {
-      
       let date = new Date(dates[0])
       let newDate = date.toISOString();
-      console.log(newDate)
       startTime = '&startTime=' + newDate;
     }
 
@@ -394,12 +317,12 @@ const SejsmTable = () => {
   }
    
     setLoading(true);
-    return {sort, userAuthors, rooms, wordKey, token, startTime, endTime};
+    return {sort, userAuthors, rooms, wordKey, startTime, endTime};
    }
 
   const fetchData = () => {
-    const {sort, userAuthors, rooms, wordKey, token, startTime, endTime} = getParams();
-    getDetails(sort, userAuthors, rooms, wordKey, token, startTime, endTime);
+    const {sort, userAuthors, rooms, wordKey, startTime, endTime} = getParams();
+    getDetails(sort, userAuthors, rooms, wordKey, startTime, endTime);
   };
 
   const setFilters = () => {
@@ -452,7 +375,7 @@ const SejsmTable = () => {
       
     />
       <Drawer title={`${isCreate ? 'Добавление' : 'Редактирование '} элемента`} placement="right" onClose={onClose} open={open} destroyOnClose>
-       <EditDetail data = {data} setData = {setData} refreshPage = {refreshPage} initialValue = {detailBase} isCreate = {isCreate} getSort = {getParams} getDetails = {getDetails}></EditDetail>
+       <EditDetail data = {data} setData = {setData} refreshPage = {refreshPage} initialValue = {detailBase} isCreate = {isCreate} fetch={fetchData}></EditDetail>
       </Drawer>
       <Drawer title="Фотографии" placement="bottom" onClose={closePhoto} open={openPhoto} height = {500} destroyOnClose>
       <UploadPhoto idPhoto = {idPhoto}></UploadPhoto>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, Component } from 'react';
-import { DatePicker, Button, Form, Input, Select, message } from 'antd';
+import { Button, Form, Input, Select, message } from 'antd';
 
 
 const AddCommand = ({isCreate, data, setData, refreshPage, initialValue, getSort, getCommands}) => {

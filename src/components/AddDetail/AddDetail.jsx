@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { LockOutlined, UserOutlined } from '@ant-design/icons';
+
+import { LockOutlined } from '@ant-design/icons';
 import { DatePicker, Button, Form, Input } from 'antd';
 
 
@@ -8,11 +8,10 @@ const AddDetail = (props) => {
   const [form] = Form.useForm();
 
   const onFinish = (values) => {
-    const token = localStorage.getItem('accessToken').replaceAll("\"", "");
-    fetch(`http://109.167.155.87:8080/detail`, {
+    fetch(`cvs_back_net:8080/detail`, {
         method: 'POST',
         headers: {
-            'Authorization' :'Bearer ' + token,
+            'Authorization' :'Bearer ' + localStorage.getItem('accessToken').replaceAll("\"", ""),
             'Content-Type': 'application/json;charset=utf-8'
         },
         body: JSON.stringify(values)

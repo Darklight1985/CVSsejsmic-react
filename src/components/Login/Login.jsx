@@ -1,11 +1,11 @@
 import React from 'react';
 import { useState } from 'react';
-import { EyeInvisibleOutlined, EyeTwoTone, UserOutlined } from '@ant-design/icons';
+import { UserOutlined } from '@ant-design/icons';
 import { Button, Input, Space } from 'antd';
 import './Login.css';
 
 async function loginUser(credentials) {
-    return fetch('http://109.167.155.87:8080/login', {
+    return fetch(process.env.REACT_APP_LOGIN, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

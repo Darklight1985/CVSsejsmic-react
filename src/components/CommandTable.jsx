@@ -1,9 +1,7 @@
-import { Form, Input, InputNumber, Popconfirm, Table, Drawer, Button, Image, Space, message } from 'antd';
-import React, { useContext, useEffect, useRef, useState } from 'react';
-import { getCommand } from '../fetchData';
+import { Form, Input, InputNumber, Popconfirm, Table, Drawer, Button, Space, message } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { getCommand, deleteCommand } from '../fetchData';
 import AddKeyword from './AddKeyword';
-import UsersBar from './UsersBar/UsersBar';
-import AddUser from './AddUser/AddUser';
 import AddCommand from './AddComand/AddComand';
 import CommandBar from './CommandBar/CommandBar';
 
@@ -65,14 +63,12 @@ const CommandTable = () => {
     function showDrawer(e) {
         e.preventDefault();
         const id = e.target.parentNode.id;
-        console.log(id);
         if (id == '') {
           setCommand();
           isCreate = true;
           setOpen(true);
         } else {
           getCommand(id, info).then(result => {setCommand(result);
-          console.log(result)
           isCreate = false;
         setOpen(true);
         return result;
@@ -114,7 +110,7 @@ const CommandTable = () => {
               <span>
               <Space direction="horizontal">
               <Button type="link" onClick={showDrawer} id = {record.id} >Редактировать</Button>
-              <Popconfirm title="Хотите удалить?" onConfirm={() => handleDelete(record.id)}>
+              <Popconfirm title="Хотите удалить?" onConfirm={() => deleteCommand(record.id, info, setData, data)}>
                <a>Удалить</a>
               </Popconfirm>
               </Space>
@@ -123,33 +119,6 @@ const CommandTable = () => {
           },
         },
       ];
-
-      async function getCommand(id) {
-        return fetch(process.env.REACT_APP_COMMAND + `/${id}`, {
-          method: 'GET',
-          headers: {
-              'Authorization' :'Bearer ' + localStorage.getItem('accessToken').replaceAll("\"", ""),
-              'Content-Type': 'application/json;charset=utf-8'
-          },
-      }).then((res) =>  {
-        if (res.status == 403) {
-          localStorage.removeItem('accessToken');
-          throw new Error ("Время сессии истекло")
-        } else {
-          return res.json();
-        }
-      }).then(res =>
-      { if (res.error_message)
-        {
-          info (res.error_message);
-        } else {
-          return res;
-        }
-      }).catch((res) => {
-        alert(res);
-        refreshPage();
-      });
-      }
 
     const getCommands = (sort, userAuthors, wordKey, token) => {
         if (userAuthors == null) {
@@ -203,39 +172,6 @@ const CommandTable = () => {
    const refreshPage = ()=>{
     window.location.reload();
  }
-
- const handleDelete = (id) => {
-  const token = localStorage.getItem('accessToken').replaceAll("\"", "");
-  fetch(process.env.REACT_APP_COMMAND + `/${id}`, {
-    method: 'DELETE',
-    headers: {
-        'Authorization' :'Bearer ' + token,
-    }
-}).then(res => 
-  {  if (res.status == 403) {
-     throw new Error (res.json())}
-     else {
-      if (res.status == 200) {
-        const newData = data.filter((item) => item.id !== id);
-        setData(newData);
-        return {};
-      }
-      return res.json();
-     }
-  })
-    .then(res =>
-    {
-      if (res.error_message)
-      {
-        info (res.error_message);
-      } 
-    }).catch((res) => {
-      alert(res.error_message);
-      localStorage.removeItem('accessToken');
-      refreshPage();
-    });
-};
-
 
    const fetchData = () => {
     const {sort, userAuthors, wordKey, token} = getParams();

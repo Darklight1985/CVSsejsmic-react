@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Input, Space , Collapse, Drawer} from 'antd';
-import AddUser from '../AddUser/AddUser';
-import AddCommand from '../AddComand/AddComand';
+import { Button, Space , Collapse} from 'antd';
 const {Panel} = Collapse;
 
 const UsersBar = () => {
