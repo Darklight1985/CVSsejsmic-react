@@ -5,6 +5,7 @@ import { deleteUser } from '../fetchData';
 import AddKeyword from './AddKeyword';
 import UsersBar from './UsersBar/UsersBar';
 import AddUser from './AddUser/AddUser';
+import { useNavigate } from 'react-router-dom';
 
 let isCreate = false;
 
@@ -50,6 +51,7 @@ const UserTable = () => {
     const [userBase, setUser] = useState();
     const [keyword, setKeyword] = useState('');
     const [open, setOpen] = useState(false);
+    const navigate = useNavigate();
     const [tableParams, setTableParams] = useState({
       pagination: {
         current: 1,
@@ -153,34 +155,36 @@ const UserTable = () => {
          'Content-Type': 'application/json;charset=utf-8'
      }
     })
-     .then((res) =>  {
-         return res.json();}
-        )
-     .then((results) => {
-       if (results.error_message)
-       {
-         throw new Error (results.error_message);
-       }
-       const {content} = results;
-
-       console.log(content);
-          
-       setData(content);
-       setLoading(false);
-
-       setTableParams({
-         ...tableParams,
-         pagination: {
-           ...tableParams.pagination,
-           total: results.totalElements,
-         },
-       });
-     }).catch((res) => {
-       alert(res.message);
-       localStorage.removeItem('accessToken');
-       refreshPage();
-     });
- }
+    .then((res) =>  {
+      if (res.status == 403) {
+        throw new Error ("время сессии истекло")
+      } else {
+        if (res.status == 200) {
+          setLoading(false);
+          return res.json();
+        }
+         return res.json();
+      }})
+    .then((results) => {
+      if (results.error_message)
+      {
+        info (results.error_message);
+      } else {
+      const {content} = results;
+      setData(content);
+      setTableParams({
+        ...tableParams,
+        pagination: {
+          ...tableParams.pagination,
+          total: results.totalElements,
+        },
+        });
+    }}).catch((res) => {
+      alert(res.message);
+      localStorage.removeItem('accessToken');
+      navigate("/");
+    });
+}
 
    const fetchData = () => {
     const {sort, userAuthors, wordKey, token} = getParams();
@@ -211,7 +215,12 @@ const UserTable = () => {
   };
 
   const getParams = () => {
-    const token = localStorage.getItem('accessToken').replaceAll("\"", "");
+     var token;
+    if (localStorage.getItem('accessToken')) {
+      token = localStorage.getItem('accessToken').replaceAll("\"", "");
+    } else {
+      navigate("/");
+    } 
     let sort = '';
     if (tableParams.column) {
     let nameColumns = tableParams.column.dataIndex;

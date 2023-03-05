@@ -1,5 +1,5 @@
 import { Button, Image, Space, Row } from "antd";
-import React, { useState, useLayoutEffect, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 
 
 const UploadPhoto = ({idPhoto}) => {
@@ -20,7 +20,7 @@ const UploadPhoto = ({idPhoto}) => {
       if (nowIndex < photos.length) {
       let photo = photos[nowIndex];
       console.log(photo)
-      import(`./../../photos/${photo}`).then(res => {
+      import(process.env.REACT_APP_PHOTO_STORAGE + `${photo}`).then(res => {
         setIndex(nowIndex);
         setFile(res.default)
       })

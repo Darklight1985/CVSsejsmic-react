@@ -24,9 +24,7 @@ export function deleteDetail(id, info, setData, data) {
   return deleteEntity(id, info ,setData, data, process.env.REACT_APP_DETAIL);
 }
 
-export function getUsers(info) {
-  console.log(process.env.NODE_ENV);
-  console.log(process.env.REACT_APP_USER);
+export function getUsers(info) {;
   return getEntities(info, process.env.REACT_APP_USER + `/filter`);
 }
 

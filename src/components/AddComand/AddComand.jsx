@@ -1,4 +1,4 @@
-import React, { useEffect, useState, Component } from 'react';
+import React, { useEffect, useState} from 'react';
 import { Button, Form, Input, Select, message } from 'antd';
 
 
@@ -129,13 +129,13 @@ const getUsers = async () =>  {
         .catch((res) => {
         alert(res);
         localStorage.removeItem('accessToken');
-        refreshPage();
       }
       );
   };
     }
   };
 
+  
 
   return (
     <div>
