@@ -34,7 +34,7 @@ const UploadPhoto = ({idPhoto}) => {
       if (nowIndex > -1) {
       let photo = photos[nowIndex];
       console.log(photo)
-      import(`./../../photos/${photo}`).then(res => {
+      import(process.env.REACT_APP_PHOTO_STORAGE + `${photo}`).then(res => {
         setIndex(nowIndex);
         setFile(res.default)
       })
@@ -103,7 +103,7 @@ const UploadPhoto = ({idPhoto}) => {
           //setFile(results[0])
           if (results.length != 0) {
           let photo = results[0];
-          import(process.env.REACT_APP_PHOTO_STORAGE + `/${photo}`).then(res => {
+          import(process.env.REACT_APP_PHOTO_STORAGE + `${photo}`).then(res => {
             console.log(res);
             setIndex(0);
             setFile(res.default)

@@ -6,7 +6,6 @@ import './Login.css';
 
 async function loginUser(credentials) {
     return fetch(process.env.REACT_APP_LOGIN, {
-      mode: 'no-cors',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
