@@ -1,5 +1,6 @@
 import { Button, Image, Space, Row } from "antd";
 import React, { useState, useEffect } from "react";
+import axios from 'axios';
 
 
 const UploadPhoto = ({idPhoto}) => {
@@ -20,12 +21,14 @@ const UploadPhoto = ({idPhoto}) => {
       if (nowIndex < photos.length) {
       let photo = photos[nowIndex];
       console.log(photo)
-      import(process.env.REACT_APP_PHOTO_STORAGE + `${photo}`).then(res => {
+      axios.get(process.env.REACT_APP_PHOTO_STORAGE + `/${photo}`)
+      .then(res => {
         setIndex(nowIndex);
-        setFile(res.default)
+        setFile(res.request.responseURL);
       })
      }
     }
+
 
     function prevPhoto() {
       console.log(file);
@@ -34,9 +37,10 @@ const UploadPhoto = ({idPhoto}) => {
       if (nowIndex > -1) {
       let photo = photos[nowIndex];
       console.log(photo)
-      import(process.env.REACT_APP_PHOTO_STORAGE + `${photo}`).then(res => {
+      axios.get(process.env.REACT_APP_PHOTO_STORAGE + `/${photo}`)
+      .then(res => {
         setIndex(nowIndex);
-        setFile(res.default)
+        setFile(res.request.responseURL);
       })
      }
     }
@@ -61,9 +65,10 @@ const UploadPhoto = ({idPhoto}) => {
             setPhotos(arrPhoto);
             if (photos.length != 0) {
             let photo = photos[0];
-            import(`./../../photos/${photo}`).then(res => {
-            setIndex(0);
-            setFile(res.default)
+            axios.get(process.env.REACT_APP_PHOTO_STORAGE + `/${photo}`)
+            .then(res => {
+              setIndex(0);
+              setFile(res.request.responseURL);
             })
             } else {
               setFile("error");
@@ -76,6 +81,7 @@ const UploadPhoto = ({idPhoto}) => {
         });
       }
     };
+
 
     useEffect(() => {
         console.log(idPhoto);
@@ -103,10 +109,10 @@ const UploadPhoto = ({idPhoto}) => {
           //setFile(results[0])
           if (results.length != 0) {
           let photo = results[0];
-          import(process.env.REACT_APP_PHOTO_STORAGE + `${photo}`).then(res => {
-            console.log(res);
+          axios.get(process.env.REACT_APP_PHOTO_STORAGE + `/${photo}`)
+          .then(res => {
             setIndex(0);
-            setFile(res.default)
+            setFile(res.request.responseURL);
           })
         }
           return results;
@@ -116,6 +122,7 @@ const UploadPhoto = ({idPhoto}) => {
       });
     }
 
+    
     const onFinish = () => {
         const token = localStorage.getItem('accessToken').replaceAll("\"", "");
         let tableElem = document.getElementById('inputPhoto');
@@ -144,10 +151,11 @@ const UploadPhoto = ({idPhoto}) => {
               setPhotos(arrPhoto);
               if (photos.length == 1) {
               let photo = photos[0];
-              setTimeout(() => import(process.env.PHOTO_STORAGE + `/${photo}`).then(res => {
+              axios.get(process.env.REACT_APP_PHOTO_STORAGE + `/${photo}`)
+              .then(res => {
                 setIndex(0);
-                setFile(res.default)
-              }), 1500);
+                setFile(res.request.responseURL);
+              })
             }
               return res;
             }
