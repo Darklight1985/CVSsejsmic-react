@@ -12,6 +12,14 @@ export function getUser(id, info) {
 return getEntity(id, info, process.env.REACT_APP_USER);
 }
 
+export function getRoom(id, info) {
+  return getEntity(id, info, process.env.REACT_APP_ROOM);
+}
+
+export function getSystem(id, info) {
+  return getEntity(id, info, process.env.REACT_APP_SYSTEM);
+}
+
 export function deleteUser(id, info, setData, data) {
   return deleteEntity(id, info ,setData, data, process.env.REACT_APP_USER);
 }
@@ -24,8 +32,20 @@ export function deleteDetail(id, info, setData, data) {
   return deleteEntity(id, info ,setData, data, process.env.REACT_APP_DETAIL);
 }
 
+export function deleteRoom(id, info, setData, data) {
+  return deleteEntity(id, info ,setData, data, process.env.REACT_APP_ROOM);
+}
+
+export function deleteSystem(id, info, setData, data) {
+  return deleteEntity(id, info ,setData, data, process.env.REACT_APP_SYSTEM);
+}
+
 export function getUsers(info) {;
   return getEntities(info, process.env.REACT_APP_USER + `/filter`);
+}
+
+export function getRoles(info) {;
+  return getEntities(info, process.env.REACT_APP_USER + `/roles`);
 }
 
 export function getRooms(info) {
@@ -36,6 +56,26 @@ export function createDetail(data, setData, values, info) {
   return createEntity(data, setData, values, info, process.env.REACT_APP_DETAIL);
 }
 
+export function createRoom(data, setData, values, info) {
+  return createEntity(data, setData, values, info, process.env.REACT_APP_ROOM);
+}
+
+export function createSystem(data, setData, values, info) {
+  return createEntity(data, setData, values, info, process.env.REACT_APP_SYSTEM);
+}
+
+export function updateDetail(newData, index, id, values, setData, info) {
+  return updateEntity(newData, index, id, values, setData, info, process.env.REACT_APP_DETAIL);
+}
+
+export function updateRoom(newData, index, id, values, setData, info) {
+  return updateEntity(newData, index, id, values, setData, info, process.env.REACT_APP_ROOM);
+}
+
+export function updateSystem(newData, index, id, values, setData, info) {
+  return updateEntity(newData, index, id, values, setData, info, process.env.REACT_APP_SYSTEM);
+}
+
 
 function getEntity(id, info, url) {
   return fetch(url + `/${id}`, {
@@ -44,10 +84,10 @@ function getEntity(id, info, url) {
         'Authorization' :'Bearer ' + localStorage.getItem('accessToken').replaceAll("\"", ""),
     },
 }).then((res) =>  {
-  if (res.status == 403) {
+  if (res.status === 403) {
     throw new Error ("Время сессии истекло")
   } else {
-    if (res.status == 200) {
+    if (res.status === 200) {
       return res.json();
     }
     return res.json();
@@ -75,10 +115,10 @@ const deleteEntity = (id, info ,setData, data, url) => {
         'Authorization' :'Bearer ' + token,
     }
 }).then(res => 
-  {  if (res.status == 403) {
-      return res.json(); }
+  {  if (res.status > 400) {
+      return res; }
      else {
-      if (res.status == 200) {
+      if (res.status === 200) {
         const newData = data.filter((item) => item.id !== id);
         setData(newData);
         return {};
@@ -92,8 +132,10 @@ const deleteEntity = (id, info ,setData, data, url) => {
       {
         info (res.error_message);
       } 
+      alert("Удаление запрещено");
     })
 };
+
 
 const getEntities = async (info, url) =>  {
   return fetch(url , {
@@ -105,7 +147,7 @@ const getEntities = async (info, url) =>  {
     }
    })
     .then((res) =>{
-      if (res.status == 403) {
+      if (res.status === 403) {
         throw new Error ("Время сессии истекло")
       } else {       
         return res.json();
@@ -136,7 +178,7 @@ fetch(url, {
   body: JSON.stringify(values)
 })
 .then((res) =>  {
-  if (res.status == 403) {
+  if (res.status === 403) {
     throw new Error ("Время сессии истекло")
   } else {
     return res.json();
@@ -158,10 +200,6 @@ fetch(url, {
 });
 }
 
-export function updateDetail(newData, index, id, values, setData, info) {
-  return updateEntity(newData, index, id, values, setData, info, process.env.REACT_APP_DETAIL);
-}
-
 const updateEntity = (newData, index, id, values, setData, info, url) => {
 fetch(url + `/${id}`, {
   method: 'PUT',
@@ -171,7 +209,7 @@ fetch(url + `/${id}`, {
   },
   body: JSON.stringify(values)
 }).then((res) => {
-if (res.status == 403) {
+if (res.status === 403) {
   throw new Error ("Время сессии истекло")
 } else {
   return res.json();

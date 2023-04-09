@@ -375,7 +375,7 @@ const SejsmTable = () => {
       
     />
       <Drawer title={`${isCreate ? 'Добавление' : 'Редактирование '} элемента`} placement="right" onClose={onClose} open={open} destroyOnClose>
-       <EditDetail data = {data} setData = {setData} refreshPage = {refreshPage} initialValue = {detailBase} isCreate = {isCreate} fetch={fetchData}></EditDetail>
+       <EditDetail data = {data} setData = {setData} refreshPage = {refreshPage} initialValue = {detailBase} isCreate = {isCreate} fetchData={fetchData}></EditDetail>
       </Drawer>
       <Drawer title="Фотографии" placement="bottom" onClose={closePhoto} open={openPhoto} height = {500} destroyOnClose>
       <UploadPhoto idPhoto = {idPhoto}></UploadPhoto>

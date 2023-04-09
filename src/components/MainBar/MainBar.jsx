@@ -17,6 +17,8 @@ const MainBar = () => {
      <Space direction="horizontal">
      <Button type="primary" onClick={() => navigate("/users")}>Пользователи</Button>
      <Button type = "primary" onClick={() => navigate("/commands")}>Команды</Button>
+     <Button type = "primary" onClick={() => navigate("/rooms")}>Помещения</Button>
+     <Button type = "primary" onClick={() => navigate("/systems")}>Системы</Button>
      <Button type = "primary" onClick={handleLogout}>Выйти</Button>
     </Space>
     </Panel>

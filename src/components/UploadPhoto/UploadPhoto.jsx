@@ -14,38 +14,78 @@ const UploadPhoto = ({idPhoto}) => {
         setFileLoad(URL.createObjectURL(e.target.files[0]));
     }
 
-    function nextPhoto() {
+
+    
+    const nextPhoto = async(event) => {
+      event.preventDefault();
+      const token = localStorage.getItem('accessToken').replaceAll("\"", "");
       console.log(file);
       console.log(index);
       let nowIndex = index + 1;
       if (nowIndex < photos.length) {
       let photo = photos[nowIndex];
       console.log(photo)
-      axios.get(process.env.REACT_APP_PHOTO_STORAGE + `/${photo}`)
-      .then(res => {
+      var response;
+      try {
+        response = await axios({
+          method: "get",
+          url: process.env.REACT_APP_PHOTO_STORAGE + `/${photo}`,
+          headers: { "Content-Type": "multipart/form-data" },
+          headers: {
+            'Authorization' :'Bearer ' + token,
+           },
+         responseType:"blob"
+        });
+      } catch(error) {
+        console.log(error)
+      }
+      console.log(response);
+      var reader = new window.FileReader();
+      reader.readAsDataURL(response.data);
+      reader.onload = function() {
+        var imageDataUrl = reader.result;
         setIndex(nowIndex);
-        setFile(res.request.responseURL);
-      })
-     }
+        setFile(imageDataUrl);
+      } 
+    }
     }
 
 
-    function prevPhoto() {
+    const prevPhoto = async(event) => {
+      event.preventDefault();
+      const token = localStorage.getItem('accessToken').replaceAll("\"", "");
       console.log(file);
       console.log(index);
       let nowIndex = index - 1;
       if (nowIndex > -1) {
       let photo = photos[nowIndex];
-      console.log(photo)
-      axios.get(process.env.REACT_APP_PHOTO_STORAGE + `/${photo}`)
-      .then(res => {
+      var response;
+      try {
+        response = await axios({
+          method: "get",
+          url: process.env.REACT_APP_PHOTO_STORAGE + `/${photo}`,
+          headers: { "Content-Type": "multipart/form-data" },
+          headers: {
+            'Authorization' :'Bearer ' + token,
+           },
+         responseType:"blob"
+        });
+      } catch(error) {
+        console.log(error)
+      }
+      console.log(response);
+      var reader = new window.FileReader();
+      reader.readAsDataURL(response.data);
+      reader.onload = function() {
+        var imageDataUrl = reader.result;
         setIndex(nowIndex);
-        setFile(res.request.responseURL);
-      })
+        setFile(imageDataUrl);
+      } 
      }
     }
 
-    const handleDelete = () => {
+    const handleDelete = async(event) => {
+      event.preventDefault();
       const token = localStorage.getItem('accessToken').replaceAll("\"", "");
       if (photos.length != 0) {
       let photo = photos[index];
@@ -65,16 +105,11 @@ const UploadPhoto = ({idPhoto}) => {
             setPhotos(arrPhoto);
             if (photos.length != 0) {
             let photo = photos[0];
-            axios.get(process.env.REACT_APP_PHOTO_STORAGE + `/${photo}`)
-            .then(res => {
-              setIndex(0);
-              setFile(res.request.responseURL);
-            })
-            } else {
-              setFile("error");
-            }
-            return;
+            getPhoto(photo);
+          } else {
+            setFile('error');
           }
+        }
         }).catch((res) => {
           alert(res);
           window.location.reload();
@@ -106,15 +141,10 @@ const UploadPhoto = ({idPhoto}) => {
       .then((results) => {
           console.log(results);
           setPhotos(results);
-          //setFile(results[0])
           if (results.length != 0) {
           let photo = results[0];
-          axios.get(process.env.REACT_APP_PHOTO_STORAGE + `/${photo}`)
-          .then(res => {
-            setIndex(0);
-            setFile(res.request.responseURL);
-          })
-        }
+          getPhoto(photo);
+      }
           return results;
       }).catch((res) => {
         alert(res);
@@ -122,6 +152,31 @@ const UploadPhoto = ({idPhoto}) => {
       });
     }
 
+    const getPhoto = async(photo) => {
+      var response;
+      const token = localStorage.getItem('accessToken').replaceAll("\"", "");
+      try {
+        response = await axios({
+          method: "get",
+          url: process.env.REACT_APP_PHOTO_STORAGE + `/${photo}`,
+          headers: { "Content-Type": "multipart/form-data" },
+          headers: {
+            'Authorization' :'Bearer ' + token,
+           },
+         responseType:"blob"
+        });
+      } catch(error) {
+        console.log(error)
+      }
+      console.log(response);
+      var reader = new window.FileReader();
+      reader.readAsDataURL(response.data);
+      reader.onload = function() {
+        var imageDataUrl = reader.result;
+        setIndex(0);
+        setFile(imageDataUrl);
+    }
+    }
     
     const onFinish = () => {
         const token = localStorage.getItem('accessToken').replaceAll("\"", "");
@@ -151,11 +206,7 @@ const UploadPhoto = ({idPhoto}) => {
               setPhotos(arrPhoto);
               if (photos.length == 1) {
               let photo = photos[0];
-              axios.get(process.env.REACT_APP_PHOTO_STORAGE + `/${photo}`)
-              .then(res => {
-                setIndex(0);
-                setFile(res.request.responseURL);
-              })
+              getPhoto(photo);
             }
               return res;
             }

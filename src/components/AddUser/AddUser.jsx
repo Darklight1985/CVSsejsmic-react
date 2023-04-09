@@ -1,12 +1,32 @@
 import React, { useEffect, useState } from 'react';
-import { LockOutlined, UserOutlined } from '@ant-design/icons';
-import { DatePicker, Button, Form, Input } from 'antd';
+import { Button, Form, Input, Select, message} from 'antd';
+import { getRoles } from '../../fetchData';
 
 
 const AddUser = ({isCreate, data, setData, refreshPage, initialValue, getSort, getUsers}) => {
+  const [roles, setRoles] = useState([]);
   const [password, setPassword] = useState();
   const [passwordVisible, setPasswordVisible] = React.useState(false);
+  const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm();
+  const info = (message) => {
+    messageApi.info(message);
+  };
+
+  useEffect(() => {
+    getSelectRoles();
+ }, []);
+
+  const getSelectRoles = () => {
+    getRoles(info).then(res => {
+        let filterRoom = [];
+
+        for (let key in res) {
+          filterRoom.push({value: res[key].id, label: res[key].name})
+        }
+         setRoles(filterRoom);
+        });
+   };
 
   const onFinish = (values) => {
     const newData = [...data];
@@ -132,6 +152,23 @@ const AddUser = ({isCreate, data, setData, refreshPage, initialValue, getSort, g
             onVisibleChange: setPasswordVisible,
           }}
         />
+      </Form.Item>
+      <Form.Item
+        name="role"
+        rules={[
+          {
+            required: true,
+            message: 'Выберите роль',
+          },
+        ]}
+      >
+      <Select
+      defaultValue='Выберите роль'
+      style={{
+        width: 220,
+      }}
+      options={roles}
+    />
       </Form.Item>
       <Form.Item shouldUpdate>
         {() => (

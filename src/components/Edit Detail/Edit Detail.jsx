@@ -6,8 +6,7 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/es';
 dayjs.locale('es')
 
-
-const EditDetail = ({isCreate, data, setData, refreshPage, initialValue, fetchData}) => {
+const EditDetail = ({isCreate, data, setData, initialValue, fetchData}) => {
   const [rooms, setRooms] = useState([]);
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();

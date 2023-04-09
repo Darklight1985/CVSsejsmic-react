@@ -1,10 +1,10 @@
 import { Form, Input, InputNumber, Popconfirm, Table, Drawer, Button, Space, message } from 'antd';
 import React, {useEffect, useState } from 'react';
-import { getUser } from '../fetchData';
-import { deleteUser } from '../fetchData';
+import { getRoom } from '../fetchData';
+import { deleteRoom } from '../fetchData';
 import AddKeyword from './AddKeyword';
 import UsersBar from './UsersBar/UsersBar';
-import AddUser from './AddUser/AddUser';
+import AddRoom from './AddRoom';
 import { useNavigate } from 'react-router-dom';
 
 let isCreate = false;
@@ -44,11 +44,11 @@ const EditableCell = ({
     );
   };
 
-const UserTable = () => {
+const RoomTable = () => {
     const [form] = Form.useForm();
     const [data, setData] = useState();
     const [loading, setLoading] = useState(false);
-    const [userBase, setUser] = useState();
+    const [roomBase, setRoom] = useState();
     const [keyword, setKeyword] = useState('');
     const [open, setOpen] = useState(false);
     const navigate = useNavigate();
@@ -70,12 +70,12 @@ const UserTable = () => {
    function showDrawer(e) {
     e.preventDefault();
     const id = e.target.parentNode.id;
-    if (id == '') {
-      setUser();
+    if (id === '') {
+      setRoom();
       isCreate = true;
       setOpen(true);
     } else {
-      getUser(id).then(result => {setUser(result);
+      getRoom(id).then(result => {setRoom(result);
       isCreate = false;
     setOpen(true);
     return result;
@@ -90,30 +90,17 @@ const UserTable = () => {
    const columns = [
     {
       title: 'Имя',
-      dataIndex: 'firstName',
+      dataIndex: 'name',
       sorter: true,
       width: '15%',
       fixed: 'left',
       editable: true,
     },
     {
-      title: 'Фамилия',
-      dataIndex: 'secondName',
+      title: 'Высотная отметка',
+      dataIndex: 'height',
       sorter: true,
       width: '20%',
-    },
-    {
-      title: 'Логин',
-      dataIndex: 'username',
-      width: '15%',
-      sorter: true,
-    },
-    {
-      title: 'Роль',
-      dataIndex: 'role',
-      sorter: true,
-      width: '15%',
-      render: (role) => `${role.name}`,
     },
     {
       title: 'Операции',
@@ -124,7 +111,7 @@ const UserTable = () => {
           <span>
           <Space direction="horizontal">
           <Button type="link" onClick={showDrawer} id = {record.id} >Редактировать</Button>
-          <Popconfirm title="Хотите удалить?" onConfirm={() => deleteUser(record.id, info, setData, data)} >
+          <Popconfirm title="Хотите удалить?" onConfirm={() => deleteRoom(record.id, info, setData, data)} >
            <a>Удалить</a>
           </Popconfirm>
           </Space>
@@ -134,19 +121,11 @@ const UserTable = () => {
     },
   ];
 
-  const refreshPage = ()=>{
-    window.location.reload();
- }
-
-  const getUsers = (sort, userAuthors, wordKey, token) => {
-    if (userAuthors == null) {
-     userAuthors = '';
-     }
-   fetch(process.env.REACT_APP_USER + 
+  const getRooms = (sort, wordKey, token) => {
+   fetch(process.env.REACT_APP_ROOM + `/all` +
    `?page=` + `${tableParams.pagination.current - 1}` + 
    `&size=` + `${tableParams.pagination.pageSize}` + 
    `${sort}` + 
-   `${userAuthors}`+
    `${wordKey}`, {
      method: 'GET',
      credentials: "include",
@@ -156,23 +135,16 @@ const UserTable = () => {
      }
     })
     .then((res) =>  {
-      console.log(res);
-      if (res.status === 401) {
+      if (res.status === 403) {
         throw new Error ("время сессии истекло")
-      }
-      if (res.status > 400) {
-        console.log(res);
-        info("Доступ запрещен");
-        return res.body;
       } else {
-        if (res.status == 200) {
+        if (res.status === 200) {
           setLoading(false);
           return res.json();
         }
          return res.json();
       }})
     .then((results) => {
-      console.log(results);
       if (results.error_message)
       {
         info (results.error_message);
@@ -194,8 +166,8 @@ const UserTable = () => {
 }
 
    const fetchData = () => {
-    const {sort, userAuthors, wordKey, token} = getParams();
-    getUsers(sort, userAuthors, wordKey, token);
+    const {sort, wordKey, token} = getParams();
+    getRooms(sort, wordKey, token);
   };
 
   const mergedColumns = columns.map((col) => {
@@ -234,16 +206,6 @@ const UserTable = () => {
     let order = tableParams.order === 'ascend' ? '%2CASC' : '%2CDESC';
     sort = '&sort=' + nameColumns + order;
     }
-    let authorArr = tableParams.filters;
-
-    let userAuthors = null;
-    if (authorArr) {
-      const {author} = authorArr;
-       userAuthors = ``
-      for (let key in author) {
-         userAuthors = userAuthors + `&userId=` + author[key];
-      }
-    }
 
     let wordKey = '';
     if (keyword) {
@@ -251,7 +213,7 @@ const UserTable = () => {
     } 
    
     setLoading(true);
-    return {sort, userAuthors, wordKey, token};
+    return {sort, wordKey, token};
    }
 
     return (
@@ -259,7 +221,7 @@ const UserTable = () => {
         {contextHolder}
         <UsersBar></UsersBar>
         <Form form={form} component={false}>
-        <h1>Таблица пользователей</h1>
+        <h1>Таблица помещений</h1>
         <Space direction="horizontal">
         <Space direction="vertical">
         <a>Поиск по ключевому слову</a>
@@ -290,11 +252,11 @@ const UserTable = () => {
           
         />
           <Drawer title={`${isCreate ? 'Добавление' : 'Редактирование '} пользователя`} placement="right" onClose={onClose} open={open} destroyOnClose>
-           <AddUser data = {data} setData = {setData} refreshPage = {refreshPage} initialValue = {userBase} isCreate = {isCreate} getSort = {getParams} getUsers = {getUsers}></AddUser>
+           <AddRoom data = {data} setData = {setData} initialValue = {roomBase} isCreate = {isCreate} getSort = {getParams} getRoom = {getRoom} fetch={fetchData}></AddRoom>
           </Drawer>
         </Form>
         </div>
       );
     };
 
-    export default UserTable;
+    export default RoomTable;
