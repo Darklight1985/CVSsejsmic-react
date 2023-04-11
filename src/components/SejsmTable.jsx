@@ -92,7 +92,9 @@ const SejsmTable = () => {
       isCreate = true;
       setOpen(true);
     } else {
-     getDetail(id, info).then(result => {setDetail(result);
+     getDetail(id, info).then(result => {
+      console.log(result)
+      setDetail(result);
       isCreate = false;
     setOpen(true);
     return result;

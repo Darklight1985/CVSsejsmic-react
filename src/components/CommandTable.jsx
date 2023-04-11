@@ -140,8 +140,20 @@ const CommandTable = () => {
          }
         })
         .then((res) =>  {
-          if (res.status == 403) {
-            throw new Error ("время сессии истекло")
+          if (res.status >= 400 || res.status < 200) {
+            console.log(res.body);
+            let resd = res.body.getReader();
+            resd.read().then(({done, value}) => {
+              console.log(value);
+                let stringOur = new TextDecoder().decode(value);
+                console.log(stringOur);
+                console.log(typeof stringOur)
+                if (stringOur instanceof Object) {
+                  let str = JSON.parse(stringOur).message;
+                info(str);
+                } else {
+                  info (stringOur);        
+            }})
           } else {
             if (res.status == 200) {
               setLoading(false);
@@ -150,10 +162,6 @@ const CommandTable = () => {
              return res.json();
           }})
         .then((results) => {
-          if (results.error_message)
-          {
-            info (results.error_message);
-          } else {
           const {content} = results;
           setData(content);
           setTableParams({
@@ -163,11 +171,7 @@ const CommandTable = () => {
               total: results.totalElements,
             },
             });
-        }}).catch((res) => {
-          alert(res.message);
-          localStorage.removeItem('accessToken');
-          navigate("/");
-        });
+        })
     }
 
     useEffect(() => {

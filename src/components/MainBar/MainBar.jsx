@@ -6,6 +6,7 @@ const {Panel} = Collapse;
 
 const MainBar = () => {
     const navigate = useNavigate();
+    let editing = false;
 
     const handleLogout = () => {
         localStorage.removeItem('accessToken');

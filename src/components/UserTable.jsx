@@ -156,15 +156,23 @@ const UserTable = () => {
      }
     })
     .then((res) =>  {
-      console.log(res);
-      if (res.status === 401) {
-        throw new Error ("время сессии истекло")
+      if (res.status >= 400 || res.status < 200) {
+        console.log(res.body);
+        let resd = res.body.getReader();
+        resd.read().then(({done, value}) => {
+          console.log(value);
+            let stringOur = new TextDecoder().decode(value);
+            console.log(stringOur);
+            console.log(typeof stringOur)
+            if (stringOur instanceof Object) {
+              let str = JSON.parse(stringOur).message;
+            info(str);
+            }
+              else {
+              info (stringOur);        
+        }})
       }
-      if (res.status > 400) {
-        console.log(res);
-        info("Доступ запрещен");
-        return res.body;
-      } else {
+       else {
         if (res.status == 200) {
           setLoading(false);
           return res.json();
@@ -172,11 +180,8 @@ const UserTable = () => {
          return res.json();
       }})
     .then((results) => {
+      if (results) {
       console.log(results);
-      if (results.error_message)
-      {
-        info (results.error_message);
-      } else {
       const {content} = results;
       setData(content);
       setTableParams({
@@ -186,7 +191,8 @@ const UserTable = () => {
           total: results.totalElements,
         },
         });
-    }}).catch((res) => {
+      }
+    }).catch((res) => {
       alert(res.message);
       localStorage.removeItem('accessToken');
       navigate("/");

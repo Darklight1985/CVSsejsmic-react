@@ -84,27 +84,20 @@ function getEntity(id, info, url) {
         'Authorization' :'Bearer ' + localStorage.getItem('accessToken').replaceAll("\"", ""),
     },
 }).then((res) =>  {
-  if (res.status === 403) {
-    throw new Error ("Время сессии истекло")
-  } else {
-    if (res.status === 200) {
-      return res.json();
-    }
-    return res.json();
+  if (res.status >= 400 || res.status < 200) {
+    console.log(res.body);
+    let resd = res.body.getReader();
+    resd.read().then(({done, value}) => {
+        let stringOur = new TextDecoder().decode(value);
+        if (stringOur instanceof Object) {
+        let str = JSON.parse(stringOur).message;
+        info(str);
+        } else {
+          info (stringOur);        
+    }})
   }
+  return res.json();
 })
-.then(res =>
-{ if (res.error_message)
-  {
-    info (res.error_message);
-  } else {
-    return res;
-  }
-}).catch((res) => {
-  alert(res.message);
-  localStorage.removeItem('accessToken');
-  window.location.reload();
-});
 }
 
 const deleteEntity = (id, info ,setData, data, url) => {
@@ -115,25 +108,26 @@ const deleteEntity = (id, info ,setData, data, url) => {
         'Authorization' :'Bearer ' + token,
     }
 }).then(res => 
-  {  if (res.status > 400) {
-      return res; }
-     else {
+  {  
+    if (res.status >= 400 || res.status < 200) {
+      console.log(res.body);
+      let resd = res.body.getReader();
+      resd.read().then(({done, value}) => {
+          let stringOur = new TextDecoder().decode(value);
+          if (stringOur instanceof Object) {
+          let str = JSON.parse(stringOur).message;
+          info(str);
+          } else {
+            info (stringOur);        
+      }})
+      } else {
       if (res.status === 200) {
         const newData = data.filter((item) => item.id !== id);
         setData(newData);
         return {};
       }
-      return res.json();
      }
   })
-    .then(res =>
-    {
-      if (res.error_message)
-      {
-        info (res.error_message);
-      } 
-      alert("Удаление запрещено");
-    })
 };
 
 
@@ -147,11 +141,22 @@ const getEntities = async (info, url) =>  {
     }
    })
     .then((res) =>{
-      if (res.status === 403) {
-        throw new Error ("Время сессии истекло")
-      } else {       
+      if (res.status >= 400 || res.status < 200) {
+        console.log(res.body);
+        let resd = res.body.getReader();
+        resd.read().then(({done, value}) => {
+            let stringOur = new TextDecoder().decode(value);
+            if (stringOur instanceof Object) {
+            let str = JSON.parse(stringOur).message;
+            info(str);
+            } else {
+              info (stringOur);        
+        }})
+      } 
+        else {       
         return res.json();
-      }})
+      }
+    })
       .then(res =>
         {
           if (res.error_message)
@@ -161,11 +166,6 @@ const getEntities = async (info, url) =>  {
           } 
           return res;
         })
-      .catch((res) => {
-        alert(res.message);
-        localStorage.removeItem('accessToken');
-        window.location.reload();
-    });
 }
 
 const createEntity = (data, setData, values, info, url) => {
@@ -178,26 +178,29 @@ fetch(url, {
   body: JSON.stringify(values)
 })
 .then((res) =>  {
-  if (res.status === 403) {
-    throw new Error ("Время сессии истекло")
+  if (res.status >= 400 || res.status < 200) {
+    console.log(res);
+    let resd = res.body.getReader();
+    resd.read().then(({done, value}) => {
+        let stringOur = new TextDecoder().decode(value);
+        console.log(stringOur)
+        if (stringOur instanceof Object) {
+        let str = JSON.parse(stringOur).message;
+        info(str);
+        } else {
+          info (stringOur);        
+    }})
   } else {
     return res.json();
   }})
   .then(res=> {
-     if (res.error_message) {
-      info(res.error_message)
-     } else {
+    if (res) {
+      console.log(res)
       const newData = [...data];
       newData.push(res);
       setData(newData);
       return res;
-     }
-  })
-.catch((res) => {
-  alert(res.message);
-  localStorage.removeItem('accessToken');
-  window.location.reload();
-});
+    }})
 }
 
 const updateEntity = (newData, index, id, values, setData, info, url) => {
@@ -209,23 +212,22 @@ fetch(url + `/${id}`, {
   },
   body: JSON.stringify(values)
 }).then((res) => {
-if (res.status === 403) {
-  throw new Error ("Время сессии истекло")
+  if (res.status >= 400 || res.status < 200) {
+    console.log(res.body);
+    let resd = res.body.getReader();
+    resd.read().then(({done, value}) => {
+        let stringOur = new TextDecoder().decode(value);
+        if (stringOur instanceof Object) {
+        let str = JSON.parse(stringOur).message;
+        info(str);
+        } else {
+          info (stringOur);        
+    }})
 } else {
   return res.json();
 }})
 .then(res => {
-  if (res.error_message) {
-    info(res.error_message)
-   } else {
       newData[index] = res;
       setData(newData);
-   }
 })
-.catch((res) => {
-alert(res.message);
-localStorage.removeItem('accessToken');
-window.location.reload();
-}
-);
 }
