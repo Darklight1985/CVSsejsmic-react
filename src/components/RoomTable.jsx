@@ -135,20 +135,25 @@ const RoomTable = () => {
      }
     })
     .then((res) =>  {
-      if (res.status === 403) {
-        throw new Error ("время сессии истекло")
+      if (res.status >= 400 || res.status < 200) {
+        console.log(res.body);
+        let resd = res.body.getReader();
+        resd.read().then(({done, value}) => {
+            let stringOur = new TextDecoder().decode(value);
+            if (stringOur instanceof Object) {
+            let str = JSON.parse(stringOur).message;
+            info(str);
+            } else {
+              info (stringOur);        
+        }})
+        setLoading(false);
+        return {};
       } else {
-        if (res.status === 200) {
-          setLoading(false);
-          return res.json();
-        }
-         return res.json();
-      }})
+        setLoading(false);
+        return res.json();
+      }
+    })
     .then((results) => {
-      if (results.error_message)
-      {
-        info (results.error_message);
-      } else {
       const {content} = results;
       setData(content);
       setTableParams({
@@ -158,11 +163,7 @@ const RoomTable = () => {
           total: results.totalElements,
         },
         });
-    }}).catch((res) => {
-      alert(res.message);
-      localStorage.removeItem('accessToken');
-      navigate("/");
-    });
+    })
 }
 
    const fetchData = () => {
@@ -228,7 +229,7 @@ const RoomTable = () => {
         <AddKeyword keys={keyword} keywordChange = {setKeyword} fetch = {fetchData}/>
         </Space>
         </Space>
-        <Button type='primary' onClick={showDrawer} style = {{float:'right'}}>Добавить пользователя</Button>
+        <Button type='primary' onClick={showDrawer} style = {{float:'right'}}>Добавить помещение</Button>
         <Table
           components={{
                   body: {

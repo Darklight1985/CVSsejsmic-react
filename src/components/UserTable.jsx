@@ -160,28 +160,22 @@ const UserTable = () => {
         console.log(res.body);
         let resd = res.body.getReader();
         resd.read().then(({done, value}) => {
-          console.log(value);
             let stringOur = new TextDecoder().decode(value);
             console.log(stringOur);
-            console.log(typeof stringOur)
             if (stringOur instanceof Object) {
-              let str = JSON.parse(stringOur).message;
+            let str = JSON.parse(stringOur).message;
             info(str);
-            }
-              else {
+            } else {
               info (stringOur);        
         }})
+        setLoading(false);
+        return {};
+      } else {
+        setLoading(false);
+        return res.json();
       }
-       else {
-        if (res.status == 200) {
-          setLoading(false);
-          return res.json();
-        }
-         return res.json();
-      }})
+    })
     .then((results) => {
-      if (results) {
-      console.log(results);
       const {content} = results;
       setData(content);
       setTableParams({
@@ -191,12 +185,7 @@ const UserTable = () => {
           total: results.totalElements,
         },
         });
-      }
-    }).catch((res) => {
-      alert(res.message);
-      localStorage.removeItem('accessToken');
-      navigate("/");
-    });
+    })
 }
 
    const fetchData = () => {

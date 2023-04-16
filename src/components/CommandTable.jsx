@@ -144,23 +144,20 @@ const CommandTable = () => {
             console.log(res.body);
             let resd = res.body.getReader();
             resd.read().then(({done, value}) => {
-              console.log(value);
                 let stringOur = new TextDecoder().decode(value);
-                console.log(stringOur);
-                console.log(typeof stringOur)
                 if (stringOur instanceof Object) {
-                  let str = JSON.parse(stringOur).message;
+                let str = JSON.parse(stringOur).message;
                 info(str);
                 } else {
                   info (stringOur);        
             }})
+            setLoading(false);
+            return {};
           } else {
-            if (res.status == 200) {
-              setLoading(false);
-              return res.json();
-            }
-             return res.json();
-          }})
+            setLoading(false);
+            return res.json();
+          }
+        })
         .then((results) => {
           const {content} = results;
           setData(content);

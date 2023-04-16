@@ -152,20 +152,12 @@ const getEntities = async (info, url) =>  {
             } else {
               info (stringOur);        
         }})
+        return {};
       } 
         else {       
         return res.json();
       }
     })
-      .then(res =>
-        {
-          if (res.error_message)
-          {
-            info (res.error_message);
-            return {};
-          } 
-          return res;
-        })
 }
 
 const createEntity = (data, setData, values, info, url) => {

@@ -127,36 +127,37 @@ const SystemTable = () => {
          'Content-Type': 'application/json;charset=utf-8'
      }
     })
-    .then((res) =>  {
-      if (res.status === 403) {
-        throw new Error ("время сессии истекло")
-      } else {
-        if (res.status === 200) {
+      .then((res) =>  {
+        if (res.status >= 400 || res.status < 200) {
+          console.log(res.body);
+          let resd = res.body.getReader();
+          resd.read().then(({done, value}) => {
+              let stringOur = new TextDecoder().decode(value);
+              if (stringOur instanceof Object) {
+              let str = JSON.parse(stringOur).message;
+              info(str);
+              } else {
+                info (stringOur);        
+          }})
+          setLoading(false);
+          return {};
+        } else {
           setLoading(false);
           return res.json();
         }
-         return res.json();
-      }})
-    .then((results) => {
-      if (results.error_message)
-      {
-        info (results.error_message);
-      } else {
-      const {content} = results;
-      setData(content);
-      setTableParams({
-        ...tableParams,
-        pagination: {
-          ...tableParams.pagination,
-          total: results.totalElements,
-        },
-        });
-    }}).catch((res) => {
-      alert(res.message);
-      localStorage.removeItem('accessToken');
-      navigate("/");
-    });
-}
+      })
+      .then((results) => {
+        const {content} = results;
+        setData(content);
+        setTableParams({
+          ...tableParams,
+          pagination: {
+            ...tableParams.pagination,
+            total: results.totalElements,
+          },
+          });
+      })
+  }
 
    const fetchData = () => {
     const {sort, wordKey, token} = getParams();
